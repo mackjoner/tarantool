@@ -31,6 +31,8 @@ ifcapable !tclvar||!bloblit {
 #
 do_test where4-1.0 {
   execsql {
+-- Tarantool. As far as rowid was replaced w/ PK - no NULLs allowed anymore.
+-- Comment those lines.
     CREATE TABLE t1(w, x, y, primary key (w,x,y));
     INSERT INTO t1 VALUES(1,2,3);
 --    INSERT INTO t1 VALUES(1,NULL,3);
@@ -130,6 +132,7 @@ proc count sql {
 # the right table did not match - something the index does not know
 # about.
 #
+# Tarantool. As far as NULLs are prohibited for PKs (was UNIQUE + rowid) - block 4-3.* completely
 # do_test where4-3.1 {
 #   execsql {
 #     CREATE TABLE t2(a primary key);
