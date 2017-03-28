@@ -1591,6 +1591,12 @@ vy_recovery_do_iterate_index(struct vy_index_recovery_info *index,
 		record.type = VY_LOG_INSERT_RANGE;
 		record.range_id = INT64_MAX; /* fake id */
 		record.range_begin = record.range_end = NULL;
+		/*
+		 * Insert one for the ranges tree and one for the
+		 * global index range.
+		 */
+		if (vy_recovery_cb_call(cb, cb_arg, &record) != 0)
+			return -1;
 		record.is_level_zero = true;
 		if (vy_recovery_cb_call(cb, cb_arg, &record) != 0)
 			return -1;
@@ -1607,7 +1613,7 @@ vy_recovery_do_iterate_index(struct vy_index_recovery_info *index,
 		record.signature = range->signature;
 		record.range_id = range->id;
 		record.range_begin = tmp = range->begin;
-		record.is_level_zero = true;
+		record.is_level_zero = range->is_level_zero;
 		if (mp_decode_array(&tmp) == 0)
 			record.range_begin = NULL;
 		record.range_end = tmp = range->end;
