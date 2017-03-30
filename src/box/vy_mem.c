@@ -349,7 +349,8 @@ static const struct vy_stmt_iterator_iface vy_mem_iterator_iface;
 void
 vy_mem_iterator_open(struct vy_mem_iterator *itr, struct vy_iterator_stat *stat,
 		     struct vy_mem *mem, enum iterator_type iterator_type,
-		     const struct tuple *key, const int64_t *vlsn)
+		     const struct tuple *key, const int64_t *vlsn,
+		     struct tuple *restore_from)
 {
 	itr->base.iface = &vy_mem_iterator_iface;
 	itr->stat = stat;
@@ -372,6 +373,9 @@ vy_mem_iterator_open(struct vy_mem_iterator *itr, struct vy_iterator_stat *stat,
 	itr->last_stmt = NULL;
 
 	itr->search_started = false;
+	itr->restore_from = restore_from;
+	if (restore_from != NULL)
+		tuple_ref(restore_from);
 }
 
 /*
@@ -494,6 +498,8 @@ vy_mem_iterator_restore(struct vy_stmt_iterator *vitr,
 	*ret = NULL;
 
 	if (!itr->search_started) {
+		if (last_stmt == NULL)
+			last_stmt = itr->restore_from;
 		if (last_stmt == NULL) {
 			if (vy_mem_iterator_start(itr) == 0)
 				return vy_mem_iterator_copy_to(itr, ret);
@@ -629,6 +635,9 @@ vy_mem_iterator_cleanup(struct vy_stmt_iterator *vitr)
 	if (itr->last_stmt != NULL)
 		tuple_unref(itr->last_stmt);
 	itr->last_stmt = NULL;
+	if (itr->restore_from != NULL)
+		tuple_unref(itr->restore_from);
+	itr->restore_from = NULL;
 }
 
 /**
@@ -640,7 +649,7 @@ vy_mem_iterator_close(struct vy_stmt_iterator *vitr)
 {
 	assert(vitr->iface->close == vy_mem_iterator_close);
 	struct vy_mem_iterator *itr = (struct vy_mem_iterator *) vitr;
-	assert(itr->last_stmt == NULL);
+	assert(itr->last_stmt == NULL && itr->restore_from == NULL);
 	TRASH(itr);
 	(void) itr;
 }
