@@ -156,7 +156,7 @@ struct vy_log_record {
 	const struct key_def *key_def;
 	/**
 	 * True if the range is on the zero level of the index
-	 * ranges tree.
+	 * ranges tree (i.e. this is infinirange of an index).
 	 */
 	bool is_level_zero;
 };

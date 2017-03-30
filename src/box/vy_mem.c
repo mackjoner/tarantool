@@ -524,10 +524,13 @@ vy_mem_iterator_restore(struct vy_stmt_iterator *vitr,
 		if (rc > 0) /* Search ended. */
 			return 0;
 		/*
-		 * Finish restore, if this actually was deferred
-		 * start.
+		 * Finish restore, if this actually was deferred start to
+		 * the specified key. If it is not key (SELECT), then
+		 * it was deferred restore and the 'last_stmt' have to be
+		 * skipped.
 		 */
-		if (last_stmt == itr->start_from) {
+		if (last_stmt == itr->start_from &&
+		    vy_stmt_type(last_stmt) == IPROTO_SELECT) {
 			if (itr->curr_stmt != NULL &&
 			    vy_mem_iterator_copy_to(itr, ret) != 0)
 				return -1;

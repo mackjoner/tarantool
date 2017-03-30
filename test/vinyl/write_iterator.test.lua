@@ -243,7 +243,6 @@ box.snapshot()
 space:select{}
 
 -- Test upsert after deletion
-
 space:insert({1})
 box.snapshot()
 space:select{}
