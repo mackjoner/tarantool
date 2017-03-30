@@ -1958,7 +1958,7 @@ vy_write_iterator_new(struct vy_index *index, bool is_last_level,
 		      int64_t oldest_vlsn);
 static NODISCARD int
 vy_write_iterator_add_run(struct vy_write_iterator *wi, struct vy_run *run,
-			  const char *end);
+			  struct tuple *compact_from, const char *end);
 static NODISCARD int
 vy_write_iterator_add_mem(struct vy_write_iterator *wi, struct vy_mem *mem);
 static NODISCARD int
@@ -2933,7 +2933,8 @@ static struct vy_write_iterator *
 vy_range_get_compact_iterator(struct vy_range *range, int run_count,
 			      int64_t *compact_max_lsn_out,
 			      int64_t vlsn, bool is_last_level,
-			      size_t *p_max_output_count)
+			      size_t *p_max_output_count,
+			      struct tuple *compact_from)
 {
 	struct vy_write_iterator *wi;
 	struct vy_run *run;
@@ -2957,7 +2958,7 @@ vy_range_get_compact_iterator(struct vy_range *range, int run_count,
 	rlist_foreach_entry(run, &range->runs, in_range) {
 		if (run_count-- == 0)
 			break;
-		if (vy_write_iterator_add_run(wi, run, NULL) != 0)
+		if (vy_write_iterator_add_run(wi, run, compact_from, NULL) != 0)
 			goto err_wi_sub;
 		*p_max_output_count += run->info.keys;
 		compact_max_lsn = MAX(compact_max_lsn, run->info.max_lsn);
@@ -4154,7 +4155,8 @@ vy_task_split_new(struct mempool *pool, struct vy_range *range,
 	wi = vy_range_get_compact_iterator(range, range->run_count,
 					   &task->compact_max_lsn,
 					   tx_manager_vlsn(xm), true,
-					   &task->max_output_count);
+					   &task->max_output_count,
+					   NULL);
 	if (wi == NULL)
 		goto err_wi;
 
@@ -4355,7 +4357,7 @@ vy_task_coalesce_new(struct mempool *pool, struct vy_range *first,
 		}
 		struct vy_run *run;
 		rlist_foreach_entry(run, &it->runs, in_range) {
-			if (vy_write_iterator_add_run(wi, run, NULL) != 0)
+			if (vy_write_iterator_add_run(wi, run, NULL, NULL) != 0)
 				goto err_wi_sub;
 			task->max_output_count += run->info.keys;
 			task->compact_max_lsn = MAX(task->compact_max_lsn,
@@ -4528,7 +4530,8 @@ vy_task_compact_new(struct mempool *pool, struct vy_range *range,
 	wi = vy_range_get_compact_iterator(range, range->compact_priority,
 					   &task->compact_max_lsn,
 					   tx_manager_vlsn(xm), is_last_level,
-					   &task->max_output_count);
+					   &task->max_output_count,
+					   NULL);
 	if (wi == NULL)
 		goto err_wi;
 
@@ -7719,6 +7722,8 @@ struct vy_run_iterator {
 	 * write. NULL for other runs.
 	 */
 	const char *end;
+	/** Tuple for deferred restore. */
+	struct tuple *start_from;
 };
 
 static void
@@ -7726,7 +7731,7 @@ vy_run_iterator_open(struct vy_run_iterator *itr, struct vy_iterator_stat *stat,
 		     struct vy_index *index, struct vy_run *run,
 		     enum iterator_type iterator_type,
 		     const struct tuple *key, const int64_t *vlsn,
-		     const char *end,
+		     struct tuple *start_from, const char *end,
 		     struct tuple_format *format,
 		     struct tuple_format *upsert_format);
 
@@ -8549,7 +8554,7 @@ vy_run_iterator_open(struct vy_run_iterator *itr, struct vy_iterator_stat *stat,
 		     struct vy_index *index, struct vy_run *run,
 		     enum iterator_type iterator_type,
 		     const struct tuple *key, const int64_t *vlsn,
-		     const char *end,
+		     struct tuple *start_from, const char *end,
 		     struct tuple_format *format,
 		     struct tuple_format *upsert_format)
 {
@@ -8579,6 +8584,9 @@ vy_run_iterator_open(struct vy_run_iterator *itr, struct vy_iterator_stat *stat,
 	itr->search_started = false;
 	itr->search_ended = false;
 	itr->end = end;
+	itr->start_from = start_from;
+	if (start_from != NULL)
+		tuple_ref(itr->start_from);
 }
 
 /**
@@ -8797,7 +8805,6 @@ vy_run_iterator_next_lsn(struct vy_stmt_iterator *vitr, struct tuple **ret)
 static NODISCARD int
 vy_run_iterator_restore(struct vy_stmt_iterator *vitr,
 			const struct tuple *last_stmt, struct tuple **ret,
-
 			bool *stop)
 {
 	(void)stop;
@@ -8805,6 +8812,8 @@ vy_run_iterator_restore(struct vy_stmt_iterator *vitr,
 	struct vy_run_iterator *itr = (struct vy_run_iterator *) vitr;
 	*ret = NULL;
 	int rc;
+	if (! itr->search_started && last_stmt == NULL)
+		last_stmt = itr->start_from;
 
 	if (itr->search_started || last_stmt == NULL) {
 		if (!itr->search_started) {
@@ -8832,6 +8841,11 @@ vy_run_iterator_restore(struct vy_stmt_iterator *vitr,
 		return rc;
 	else if (next == NULL)
 		return 0;
+	/* Finish restore, if this actually was deferred start. */
+	if (last_stmt == itr->start_from) {
+		*ret = next;
+		return 0;
+	}
 	struct key_def *def = &itr->index->index_def->key_def;
 	bool position_changed = true;
 	if (vy_stmt_compare(next, last_stmt, def) == 0) {
@@ -8886,6 +8900,8 @@ vy_run_iterator_close(struct vy_stmt_iterator *vitr)
 	struct vy_run_iterator *itr = (struct vy_run_iterator *) vitr;
 	/* cleanup() must be called before */
 	assert(itr->curr_stmt == NULL && itr->curr_page == NULL);
+	if (itr->start_from != NULL)
+		tuple_unref(itr->start_from);
 	TRASH(itr);
 	(void) itr;
 }
@@ -9818,7 +9834,7 @@ vy_write_iterator_new(struct vy_index *index, bool is_last_level,
 
 static NODISCARD int
 vy_write_iterator_add_run(struct vy_write_iterator *wi, struct vy_run *run,
-			  const char *end)
+			  struct tuple *compact_from, const char *end)
 {
 	struct vy_merge_src *src;
 	src = vy_merge_iterator_add(&wi->mi, false, false);
@@ -9826,8 +9842,9 @@ vy_write_iterator_add_run(struct vy_write_iterator *wi, struct vy_run *run,
 		return -1;
 	static const int64_t vlsn = INT64_MAX;
 	vy_run_iterator_open(&src->run_iterator, &wi->run_iterator_stat,
-			     wi->index, run, ITER_GE, wi->key, &vlsn, end,
-			     wi->surrogate_format, wi->upsert_format);
+			     wi->index, run, ITER_GE, wi->key, &vlsn,
+			     compact_from, end, wi->surrogate_format,
+			     wi->upsert_format);
 	return 0;
 }
 
@@ -9840,7 +9857,7 @@ vy_write_iterator_add_mem(struct vy_write_iterator *wi, struct vy_mem *mem)
 		return -1;
 	static const int64_t vlsn = INT64_MAX;
 	vy_mem_iterator_open(&src->mem_iterator, &wi->mem_iterator_stat,
-			     mem, ITER_GE, wi->key, &vlsn);
+			     mem, ITER_GE, wi->key, &vlsn, NULL);
 	return 0;
 }
 
@@ -10009,7 +10026,8 @@ vy_read_iterator_add_mem_range(struct vy_read_iterator *itr,
 		sub_src = vy_merge_iterator_add(&itr->merge_iterator,
 						true, true);
 		vy_mem_iterator_open(&sub_src->mem_iterator, stat , range->mem,
-				     itr->iterator_type, itr->key, itr->vlsn);
+				     itr->iterator_type, itr->key, itr->vlsn,
+				     NULL);
 	}
 	/* Add sealed in-memory indexes. */
 	struct vy_mem *mem;
@@ -10017,7 +10035,8 @@ vy_read_iterator_add_mem_range(struct vy_read_iterator *itr,
 		sub_src = vy_merge_iterator_add(&itr->merge_iterator,
 						false, true);
 		vy_mem_iterator_open(&sub_src->mem_iterator, stat , mem,
-				     itr->iterator_type, itr->key, itr->vlsn);
+				     itr->iterator_type, itr->key, itr->vlsn,
+				     NULL);
 	}
 }
 
@@ -10060,8 +10079,8 @@ vy_read_iterator_add_disk(struct vy_read_iterator *itr)
 			&itr->merge_iterator, false, true);
 		vy_run_iterator_open(&sub_src->run_iterator, stat,
 				     itr->index, run, itr->iterator_type,
-				     itr->key, itr->vlsn, NULL, format,
-				     itr->index->upsert_format);
+				     itr->key, itr->vlsn, itr->curr_stmt, NULL,
+				     format, itr->index->upsert_format);
 	}
 }
 

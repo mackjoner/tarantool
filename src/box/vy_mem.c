@@ -349,7 +349,8 @@ static const struct vy_stmt_iterator_iface vy_mem_iterator_iface;
 void
 vy_mem_iterator_open(struct vy_mem_iterator *itr, struct vy_iterator_stat *stat,
 		     struct vy_mem *mem, enum iterator_type iterator_type,
-		     const struct tuple *key, const int64_t *vlsn)
+		     const struct tuple *key, const int64_t *vlsn,
+		     struct tuple *start_from)
 {
 	itr->base.iface = &vy_mem_iterator_iface;
 	itr->stat = stat;
@@ -372,6 +373,9 @@ vy_mem_iterator_open(struct vy_mem_iterator *itr, struct vy_iterator_stat *stat,
 	itr->last_stmt = NULL;
 
 	itr->search_started = false;
+	itr->start_from = start_from;
+	if (start_from != NULL)
+		tuple_ref(start_from);
 }
 
 /*
@@ -494,6 +498,8 @@ vy_mem_iterator_restore(struct vy_stmt_iterator *vitr,
 	*ret = NULL;
 
 	if (!itr->search_started) {
+		if (last_stmt == NULL)
+			last_stmt = itr->start_from;
 		if (last_stmt == NULL) {
 			if (vy_mem_iterator_start(itr) == 0)
 				return vy_mem_iterator_copy_to(itr, ret);
@@ -517,6 +523,16 @@ vy_mem_iterator_restore(struct vy_stmt_iterator *vitr,
 		itr->key = save_key;
 		if (rc > 0) /* Search ended. */
 			return 0;
+		/*
+		 * Finish restore, if this actually was deferred
+		 * start.
+		 */
+		if (last_stmt == itr->start_from) {
+			if (itr->curr_stmt != NULL &&
+			    vy_mem_iterator_copy_to(itr, ret) != 0)
+				return -1;
+			return 0;
+		}
 		bool position_changed = true;
 		if (vy_stmt_compare(itr->curr_stmt, last_stmt, def) == 0) {
 			position_changed = false;
@@ -629,6 +645,9 @@ vy_mem_iterator_cleanup(struct vy_stmt_iterator *vitr)
 	if (itr->last_stmt != NULL)
 		tuple_unref(itr->last_stmt);
 	itr->last_stmt = NULL;
+	if (itr->start_from != NULL)
+		tuple_unref(itr->start_from);
+	itr->start_from = NULL;
 }
 
 /**
@@ -640,7 +659,7 @@ vy_mem_iterator_close(struct vy_stmt_iterator *vitr)
 {
 	assert(vitr->iface->close == vy_mem_iterator_close);
 	struct vy_mem_iterator *itr = (struct vy_mem_iterator *) vitr;
-	assert(itr->last_stmt == NULL);
+	assert(itr->last_stmt == NULL && itr->start_from == NULL);
 	TRASH(itr);
 	(void) itr;
 }
