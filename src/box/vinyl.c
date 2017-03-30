@@ -483,6 +483,11 @@ struct vy_range {
 	 */
 	uint64_t max_dump_size;
 	/**
+	 * Maximal LSN used by this range for compactions and
+	 * dumps.
+	 */
+	int64_t compact_max_lsn;
+	/**
 	 * The goal of compaction is to reduce read amplification.
 	 * All ranges for which the LSM tree has more runs per
 	 * level than run_count_per_level or run size larger than
@@ -518,6 +523,7 @@ struct vy_range {
 	rb_node(struct vy_range) tree_node;
 	struct heap_node   in_compact;
 	struct heap_node   in_dump;
+	struct heap_node   in_max_lsn;
 	/**
 	 * Incremented whenever an in-memory index or on disk
 	 * run is added to or deleted from this range. Used to
@@ -534,6 +540,23 @@ struct vy_range {
 };
 
 typedef rb_tree(struct vy_range) vy_range_tree_t;
+
+#define HEAP_NAME vy_max_lsn_heap
+
+static bool
+heap_max_lsn_less(struct heap_node *a_, struct heap_node *b_)
+{
+	struct vy_range *a = container_of(a_, struct vy_range, in_max_lsn);
+	struct vy_range *b = container_of(b_, struct vy_range, in_max_lsn);
+	return a->compact_max_lsn < b->compact_max_lsn;
+}
+
+#define HEAP_LESS(h, a, b) heap_max_lsn_less(a, b)
+
+#include "salad/heap.h"
+
+#undef HEAP_NAME
+#undef HEAP_LESS
 
 /**
  * A single operation made by a transaction:
@@ -694,6 +717,8 @@ struct vy_index {
 	 * (@sa vy_update).
 	 */
 	uint64_t column_mask;
+	/** Heap of ranges sorted by maximal used lsn. */
+	heap_t max_lsn_heap;
 };
 
 /** @sa implementation for details. */
@@ -3240,11 +3265,13 @@ vy_range_maybe_coalesce(struct vy_range **p_range)
 	 * resulting range and delete the former.
 	 */
 	it = first;
+	result->compact_max_lsn = INT64_MAX;
 	while (it != end) {
 		struct vy_range *next = vy_range_tree_next(&index->tree, it);
 		vy_scheduler_remove_range(scheduler, it);
 		vy_index_unacct_range(index, it);
 		vy_index_remove_range(index, it);
+		vy_max_lsn_heap_delete(&index->max_lsn_heap, &it->in_max_lsn);
 		vy_range_freeze_mem(it);
 		rlist_splice(&result->runs, &it->runs);
 		rlist_splice(&result->frozen, &it->frozen);
@@ -3253,9 +3280,12 @@ vy_range_maybe_coalesce(struct vy_range **p_range)
 		result->used += it->used;
 		if (result->min_lsn > it->min_lsn)
 			result->min_lsn = it->min_lsn;
+		result->compact_max_lsn = MIN(result->compact_max_lsn,
+					      it->compact_max_lsn);
 		vy_range_delete(it);
 		it = next;
 	}
+	assert(result->compact_max_lsn != INT64_MAX);
 	/*
 	 * Coalescing increases read amplification and breaks the log
 	 * structured layout of the run list, so, although we could
@@ -3265,6 +3295,7 @@ vy_range_maybe_coalesce(struct vy_range **p_range)
 	result->compact_priority = result->run_count;
 	vy_index_acct_range(index, result);
 	vy_index_add_range(index, result);
+	vy_max_lsn_heap_insert(&index->max_lsn_heap, &range->in_max_lsn);
 	index->version++;
 	vy_scheduler_add_range(scheduler, result);
 
@@ -3324,6 +3355,7 @@ vy_index_create(struct vy_index *index)
 	if (unlikely(range == NULL))
 		return -1;
 	vy_index_add_range(index, range);
+	vy_max_lsn_heap_insert(&index->max_lsn_heap, &range->in_max_lsn);
 	vy_index_acct_range(index, range);
 	vy_scheduler_add_range(scheduler, range);
 
@@ -3411,6 +3443,8 @@ vy_index_recovery_cb(const struct vy_log_record *record, void *cb_arg)
 			return -1;
 		}
 		vy_index_add_range(index, range);
+		vy_max_lsn_heap_insert(&index->max_lsn_heap,
+				       &range->in_max_lsn);
 		arg->range = range;
 		break;
 	case VY_LOG_INSERT_RUN:
@@ -3910,6 +3944,11 @@ vy_task_dump_complete(struct vy_task *task)
 					   vy_run_size(range->new_run));
 		vy_range_add_run(range, range->new_run);
 		vy_range_update_compact_priority(range);
+		assert(range->new_run->info.max_lsn >= range->compact_max_lsn);
+		/* New runs always have higher LSN. */
+		range->compact_max_lsn = range->new_run->info.max_lsn;
+		vy_max_lsn_heap_update(&index->max_lsn_heap,
+				       &range->in_max_lsn);
 		range->new_run = NULL;
 		assert(! range->is_level_zero || task->max_written_key != NULL);
 	}
@@ -4095,6 +4134,25 @@ vy_task_split_complete(struct vy_task *task)
 		 */
 		if (r->new_run != NULL) {
 			vy_range_add_run(r, r->new_run);
+			/*
+			 * Split makes compaction of all runs and
+			 * mems and the biggest LSN can be changed
+			 * in two ways:
+			 * - decreased -
+			 * Assume, that key A has biggest LSN on
+			 * disk and there is mem with 'delete A'.
+			 * After compaction both statements will
+			 * be destroyed and the info.max_lsn
+			 * decreased. But compact_max_lsn can't
+			 * decrease and we use MAX(a, b).
+			 * - increased -
+			 * For example, if there were mems with
+			 * new keys.
+			 */
+			r->compact_max_lsn = MAX(r->compact_max_lsn,
+						 r->new_run->info.max_lsn);
+			vy_max_lsn_heap_update(&index->max_lsn_heap,
+					       &r->in_max_lsn);
 			r->new_run = NULL;
 		}
 
@@ -4154,6 +4212,7 @@ vy_task_split_abort(struct vy_task *task, bool in_shutdown)
 		assert(r->shadow == range);
 		r->shadow = NULL;
 
+		vy_max_lsn_heap_delete(&index->max_lsn_heap, &r->in_max_lsn);
 		vy_index_remove_range(index, r);
 		vy_range_delete(r);
 	}
@@ -4161,6 +4220,7 @@ vy_task_split_abort(struct vy_task *task, bool in_shutdown)
 
 	/* Insert the range back into the tree. */
 	vy_index_add_range(index, range);
+	vy_max_lsn_heap_insert(&index->max_lsn_heap, &range->in_max_lsn);
 	index->version++;
 }
 
@@ -4218,6 +4278,7 @@ vy_task_split_new(struct mempool *pool, struct vy_range *range,
 
 	/* Replace the old range with the new ones. */
 	vy_index_remove_range(index, range);
+	vy_max_lsn_heap_delete(&index->max_lsn_heap, &range->in_max_lsn);
 	for (int i = 0; i < n_parts; i++) {
 		struct vy_range *r = parts[i];
 		/*
@@ -4230,6 +4291,8 @@ vy_task_split_new(struct mempool *pool, struct vy_range *range,
 		rlist_add_tail(&range->split_list, &r->split_list);
 		assert(r->shadow == NULL);
 		r->shadow = range;
+		r->compact_max_lsn = range->compact_max_lsn;
+		vy_max_lsn_heap_insert(&index->max_lsn_heap, &r->in_max_lsn);
 		vy_index_add_range(index, r);
 	}
 
@@ -4340,6 +4403,11 @@ vy_task_compact_complete(struct vy_task *task)
 	assert(n == 0);
 	if (range->new_run != NULL) {
 		vy_range_add_run(range, range->new_run);
+		/* @sa comment in the vy_task_split_complete(). */
+		range->compact_max_lsn = MAX(range->compact_max_lsn,
+					     range->new_run->info.max_lsn);
+		vy_max_lsn_heap_update(&index->max_lsn_heap,
+				       &range->in_max_lsn);
 		range->new_run = NULL;
 	}
 	range->n_compactions++;
@@ -5718,6 +5786,7 @@ vy_index_new(struct vy_env *e, struct index_def *user_index_def,
 	index->space_format = space->format;
 	tuple_format_ref(index->space_format, 1);
 	index->space_index_count = space->index_count;
+	vy_max_lsn_heap_create(&index->max_lsn_heap);
 
 	return index;
 
@@ -5845,6 +5914,7 @@ vy_range_tree_free_cb(vy_range_tree_t *t, struct vy_range *range, void *arg)
 static void
 vy_index_delete(struct vy_index *index)
 {
+	vy_max_lsn_heap_destroy(&index->max_lsn_heap);
 	read_set_iter(&index->read_set, NULL, read_set_delete_cb, NULL);
 	vy_range_tree_iter(&index->tree, NULL, vy_range_tree_free_cb, index);
 	free(index->name);
