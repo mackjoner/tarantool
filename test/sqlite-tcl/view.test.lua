@@ -207,12 +207,12 @@ do_catchsql_test view-3.3.4 {
 # } {1 {expected 4 columns for 'v1err' but got 3}}
 # MUST_WORK_TEST no query solution
 # ifcapable compound {
-# do_test  view-3.4 {
-#   execsql2 {
-#     CREATE VIEW v3 AS SELECT a FROM t1 UNION SELECT b FROM t1 ORDER BY b;
-#     SELECT * FROM v3 LIMIT 4;
-#   }
-# } {a 2 a 3 a 5 a 6}
+do_test  view-3.4 {
+  execsql2 {
+    CREATE VIEW v3 AS SELECT a FROM t1 UNION SELECT b FROM t1 ORDER BY b;
+    SELECT * FROM v3 LIMIT 4;
+  }
+} {a 2 a 3 a 5 a 6}
 # MUST_WORK_TEST no query_solution
 # do_test view-3.5 {
 #   execsql2 {

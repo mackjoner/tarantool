@@ -15,6 +15,7 @@ view-3.2... Ok
 view-3.3.1... Ok
 view-3.3.2... Ok
 view-3.3.4... Ok
+view-3.4... Ok
 view-4.1... Ok
 view-4.2... Ok
 view-4.3... Ok
@@ -47,4 +48,4 @@ view-17.1... Ok
 view-17.2... Ok
 view-20.1... Ok
 view-20.1... Ok
-0 errors out of 50 tests
+0 errors out of 51 tests
