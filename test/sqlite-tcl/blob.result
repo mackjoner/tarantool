@@ -15,14 +15,7 @@ blob-1.12... Ok
 blob-1.13... Ok
 blob-2.0... Ok
 blob-2.1... Ok
-blob-2.2...
-Expected: [123456 7890AB]
-     Got: []
-blob-2.3...
-Expected: [CDEF12 345678]
-     Got: []
+blob-2.2... Ok
+blob-2.3... Ok
 blob-2.4... Ok
-blob-3.0... Ok
-blob-3.1... Ok
-2 errors out of 23 tests
-Failures on these tests: blob-2.2 blob-2.3
+0 errors out of 21 tests

@@ -128,17 +128,18 @@ do_test blob-2.4 {
 } {}
 
 # Try to bind a blob value to a prepared statement.
-do_test blob-3.0 {
-  sqlite3 db2 test.db
-  set DB [sqlite3_connection_pointer db2]
-  set STMT [sqlite3_prepare $DB "DELETE FROM t1 WHERE a = ?" -1 DUMMY]
-  sqlite3_bind_blob $STMT 1 "\x12\x34\x56" 3
-  sqlite3_step $STMT
-} {SQLITE_DONE}
-do_test blob-3.1 {
-  sqlite3_finalize $STMT
-  db2 close
-} {}
+# Tarantool won't support attaching to multiple DBs
+# do_test blob-3.0 {
+#   sqlite3 db2 test.db
+#   set DB [sqlite3_connection_pointer db2]
+#   set STMT [sqlite3_prepare $DB "DELETE FROM t1 WHERE a = ?" -1 DUMMY]
+#   sqlite3_bind_blob $STMT 1 "\x12\x34\x56" 3
+#   sqlite3_step $STMT
+# } {SQLITE_DONE}
+# do_test blob-3.1 {
+#   sqlite3_finalize $STMT
+#   db2 close
+# } {}
 
 # MUST_WORK_TEST
 
