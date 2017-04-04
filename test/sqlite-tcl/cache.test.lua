@@ -75,8 +75,8 @@ db_delete_and_reopen
 do_execsql_test cache-2.0 {
   PRAGMA auto_vacuum=OFF;
   PRAGMA journal_mode=DELETE;
-  CREATE TABLE t1(a, b);
-  CREATE TABLE t2(c, d);
+  CREATE TABLE t1(a PRIMARY KEY, b);
+  CREATE TABLE t2(c PRIMARY KEY, d);
   INSERT INTO t1 VALUES('x', 'y');
   INSERT INTO t2 VALUES('i', 'j');
 } {delete}
@@ -121,12 +121,12 @@ do_test cache-2.3.8 { pager_cache_size db } 1
 do_execsql_test cache-2.4.1 {
   PRAGMA cache_size = 0;
   BEGIN;
-    INSERT INTO t1 VALUES(1, 2);
+    INSERT INTO t1 VALUES(2, 2);
     PRAGMA lock_status;
 } {main reserved temp closed}
 do_test cache-2.4.2 { pager_cache_size db } 2
 do_execsql_test cache-2.4.3 {
-    INSERT INTO t2 VALUES(1, 2);
+    INSERT INTO t2 VALUES(3, 2);
     PRAGMA lock_status;
 } {main exclusive temp closed}
 do_test cache-2.4.4 { pager_cache_size db } 2
@@ -135,7 +135,7 @@ do_execsql_test cache-2.4.5 COMMIT
 do_test cache-2.4.6 { pager_cache_size db } 0
 do_execsql_test cache-2.4.7 {
   SELECT * FROM t1 UNION SELECT * FROM t2;
-} {1 2 i j x y}
+} {1 2 2 2 3 2 i j x y}
 do_test cache-2.4.8 { pager_cache_size db } 0
 
 sqlite3_soft_heap_limit $cmdlinearg(soft-heap-limit)
