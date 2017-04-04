@@ -46,16 +46,18 @@ do_test busy-1.4 {
   set busyargs
 } {0 1 2 3}
 
-do_test busy-2.1 {
-  db2 eval {COMMIT}
-  db eval {BEGIN; INSERT INTO t1 VALUES(5)}
-  db2 eval {BEGIN; SELECT * FROM t1}
-  set busyargs {}
-  catchsql COMMIT
-} {1 {database is locked}}
-do_test busy-2.2 {
-  set busyargs
-} {0 1 2 3}
+# Tarantool: multiple connections are not working.
+# TODO: we still need tests to verify that transactions are OK.
+# do_test busy-2.1 {
+#   db2 eval {COMMIT}
+#   db eval {BEGIN; INSERT INTO t1 VALUES(5)}
+#   db2 eval {BEGIN; SELECT * FROM t1}
+#   set busyargs {}
+#   catchsql COMMIT
+# } {1 {database is locked}}
+# do_test busy-2.2 {
+#   set busyargs
+# } {0 1 2 3}
 
 
 db2 close
