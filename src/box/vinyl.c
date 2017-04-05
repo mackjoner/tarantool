@@ -537,6 +537,16 @@ struct vy_range {
 	 * index tree and true for the index range.
 	 */
 	bool is_level_zero;
+	/**
+	 * Prior values of some parameters. It is need to
+	 * correctly restore them in case of abort() of a task,
+	 * that have tried to change them.
+	 * We can't store these values in the vy_task structure,
+	 * since the coalesce task can change multiple ranges and
+	 * can't save multiple parameter values from participant
+	 * ranges.
+	 */
+	uint64_t saved_max_dump_size;
 };
 
 typedef rb_tree(struct vy_range) vy_range_tree_t;
@@ -3837,11 +3847,6 @@ struct vy_task {
 	double bloom_fpr;
 	/** Max written key. */
 	char *max_written_key;
-	/**
-	 * Max dump size remembered before compaction. Used to
-	 * restore the max dump size in case of compaction abort.
-	 */
-	uint64_t saved_max_dump_size;
 	/** Count of ranges to compact. */
 	int run_count;
 	/** Maximal LSN of compacted runs. */
@@ -4426,7 +4431,7 @@ vy_task_compact_abort(struct vy_task *task, bool in_shutdown)
 	/* The iterator has been cleaned up in worker. */
 	vy_write_iterator_delete(task->wi);
 	/* Restore the max dump size and compact priority. */
-	range->max_dump_size = MAX(task->saved_max_dump_size,
+	range->max_dump_size = MAX(range->saved_max_dump_size,
 				   range->max_dump_size);
 	vy_range_update_compact_priority(range);
 
@@ -4497,8 +4502,8 @@ vy_task_compact_new(struct mempool *pool, struct vy_range *range,
 	task->wi = wi;
 	task->dump_lsn = xm->lsn;
 	task->bloom_fpr = index->env->conf->bloom_fpr;
-	task->saved_max_dump_size = range->max_dump_size;
 	task->run_count = range->compact_priority;
+	range->saved_max_dump_size = range->max_dump_size;
 	range->max_dump_size = 0;
 	range->compact_priority = 0;
 
