@@ -669,6 +669,10 @@ set sqlite_current_time 0
 #   CREATE TABLE dbname.tblname(cname);
 # }
 
+execsql {
+  CREATE TABLE tblname(cname PRIMARY KEY);
+}
+
 proc glob {args} {return 1}
 db function glob glob
 db function match glob
@@ -1770,16 +1774,16 @@ foreach {tn e1 e2} {
 # Test statements related to scalar sub-queries.
 #
 
-catch { db close }
-forcedelete test.db
-sqlite3 db test.db
-catchsql {DROP TABLE t2;}
+# catch { db close }
+# forcedelete test.db
+# sqlite3 db test.db
+catchsql {DROP TABLE t22;}
 do_test e_expr-35.0 {
   execsql {
-    CREATE TABLE t2(a PRIMARY KEY, b);
-    INSERT INTO t2 VALUES('one', 'two');
-    INSERT INTO t2 VALUES('three', NULL);
-    INSERT INTO t2 VALUES(4, 5.0);
+    CREATE TABLE t22(a PRIMARY KEY, b);
+    INSERT INTO t22 VALUES('one', 'two');
+    INSERT INTO t22 VALUES('three', NULL);
+    INSERT INTO t22 VALUES(4, 5.0);
   }
 } {}
 
@@ -1793,14 +1797,14 @@ do_test e_expr-35.0 {
 do_expr_test e_expr-35.1.1 { (SELECT 35)   } integer 35
 do_expr_test e_expr-35.1.2 { (SELECT NULL) } null {}
 
-do_expr_test e_expr-35.1.3 { (SELECT count(*) FROM t2) } integer 3
-do_expr_test e_expr-35.1.4 { (SELECT 4 FROM t2) } integer 4
+do_expr_test e_expr-35.1.3 { (SELECT count(*) FROM t22) } integer 3
+do_expr_test e_expr-35.1.4 { (SELECT 4 FROM t22) } integer 4
 
 do_expr_test e_expr-35.1.5 { 
-  (SELECT b FROM t2 UNION SELECT a+1 FROM t2)
+  (SELECT b FROM t22 UNION SELECT a+1 FROM t22)
 } null {}
 do_expr_test e_expr-35.1.6 { 
-  (SELECT a FROM t2 UNION SELECT COALESCE(b, 55) FROM t2 ORDER BY 1)
+  (SELECT a FROM t22 UNION SELECT COALESCE(b, 55) FROM t22 ORDER BY 1)
 } integer 4
 
 # EVIDENCE-OF: R-46899-53765 A SELECT used as a scalar quantity must
@@ -1809,16 +1813,17 @@ do_expr_test e_expr-35.1.6 {
 # The following block tests that errors are returned in a bunch of cases
 # where a subquery returns more than one column.
 #
-set M {sub-select returns 2 columns - expected 1}
+set M {/1 {sub-select returns [23] columns - expected 1}/}
+
 foreach {tn sql} {
-  1     { SELECT (SELECT * FROM t2 UNION SELECT a+1, b+1 FROM t2) }
-  2     { SELECT (SELECT * FROM t2 UNION SELECT a+1, b+1 FROM t2 ORDER BY 1) }
+  1     { SELECT (SELECT * FROM t22 UNION SELECT a+1, b+1 FROM t22) }
+  2     { SELECT (SELECT * FROM t22 UNION SELECT a+1, b+1 FROM t22 ORDER BY 1) }
   3     { SELECT (SELECT 1, 2) }
   4     { SELECT (SELECT NULL, NULL, NULL) }
-  5     { SELECT (SELECT * FROM t2) }
+  5     { SELECT (SELECT * FROM t22) }
   6     { SELECT (SELECT * FROM (SELECT 1, 2, 3)) }
 } {
-  do_catchsql_test e_expr-35.2.$tn $sql [list 1 $M]
+  do_catchsql_test e_expr-35.2.$tn $sql $M
 }
 
 # EVIDENCE-OF: R-35764-28041 The result of the expression is the value
