@@ -344,9 +344,7 @@ foreach {tn indexes} {
   e_select-2.1.4 { CREATE INDEX i1 ON t3(b) }
 } {
 
-  catchsql { DROP INDEX '517_1_i1' }
-  catchsql { DROP INDEX '522_1_i1' }
-  catchsql { DROP INDEX '527_1_i1' }
+  catchsql { DROP INDEX i1 }
   catchsql { DROP INDEX i2 }
   catchsql { DROP INDEX i3 }
   execsql $indexes

@@ -34,32 +34,20 @@ e_select-2.1.1.16... Ok
 e_select-2.1.1.17... Ok
 e_select-2.1.1.18... Ok
 e_select-2.1.1.19... Ok
-e_select-2.1.1.20...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {}]
+e_select-2.1.1.20... Ok
 e_select-2.1.1.21... Ok
-e_select-2.1.1.22...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {}]
+e_select-2.1.1.22... Ok
 e_select-2.1.1.23... Ok
-e_select-2.1.1.24...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}}}}]
-e_select-2.1.1.25...
-Expected: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {INTEGER 3} {TEXT b}} {{INTEGER 2} {INTEGER 1} {TEXT A} {INTEGER 1} {TEXT a}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {NULL {}} {NULL {}}} {{INTEGER 2} {INTEGER 1} {TEXT A} {NULL {}} {NULL {}}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
+e_select-2.1.1.24... Ok
+e_select-2.1.1.25... Ok
 e_select-2.1.1.26... Ok
 e_select-2.1.1.27... Ok
-e_select-2.1.1.28a...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
-e_select-2.1.1.28b...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
+e_select-2.1.1.28a... Ok
+e_select-2.1.1.28b... Ok
 e_select-2.1.1.28c... Ok
 e_select-2.1.1.28d...
 Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
+     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {TEXT A} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
 e_select-2.1.2.1.1... Ok
 e_select-2.1.2.1.2... Ok
 e_select-2.1.2.1.3... Ok
@@ -95,32 +83,20 @@ e_select-2.1.2.16... Ok
 e_select-2.1.2.17... Ok
 e_select-2.1.2.18... Ok
 e_select-2.1.2.19... Ok
-e_select-2.1.2.20...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {}]
+e_select-2.1.2.20... Ok
 e_select-2.1.2.21... Ok
-e_select-2.1.2.22...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {}]
+e_select-2.1.2.22... Ok
 e_select-2.1.2.23... Ok
-e_select-2.1.2.24...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}}}}]
-e_select-2.1.2.25...
-Expected: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {INTEGER 3} {TEXT b}} {{INTEGER 2} {INTEGER 1} {TEXT A} {INTEGER 1} {TEXT a}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {NULL {}} {NULL {}}} {{INTEGER 2} {INTEGER 1} {TEXT A} {NULL {}} {NULL {}}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
+e_select-2.1.2.24... Ok
+e_select-2.1.2.25... Ok
 e_select-2.1.2.26... Ok
 e_select-2.1.2.27... Ok
-e_select-2.1.2.28a...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
-e_select-2.1.2.28b...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
+e_select-2.1.2.28a... Ok
+e_select-2.1.2.28b... Ok
 e_select-2.1.2.28c... Ok
 e_select-2.1.2.28d...
 Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
+     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {TEXT A} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
 e_select-2.1.3.1.1... Ok
 e_select-2.1.3.1.2... Ok
 e_select-2.1.3.1.3... Ok
@@ -156,32 +132,20 @@ e_select-2.1.3.16... Ok
 e_select-2.1.3.17... Ok
 e_select-2.1.3.18... Ok
 e_select-2.1.3.19... Ok
-e_select-2.1.3.20...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {}]
+e_select-2.1.3.20... Ok
 e_select-2.1.3.21... Ok
-e_select-2.1.3.22...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {}]
+e_select-2.1.3.22... Ok
 e_select-2.1.3.23... Ok
-e_select-2.1.3.24...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}}}}]
-e_select-2.1.3.25...
-Expected: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {INTEGER 3} {TEXT b}} {{INTEGER 2} {INTEGER 1} {TEXT A} {INTEGER 1} {TEXT a}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {NULL {}} {NULL {}}} {{INTEGER 2} {INTEGER 1} {TEXT A} {NULL {}} {NULL {}}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
+e_select-2.1.3.24... Ok
+e_select-2.1.3.25... Ok
 e_select-2.1.3.26... Ok
 e_select-2.1.3.27... Ok
-e_select-2.1.3.28a...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
-e_select-2.1.3.28b...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
+e_select-2.1.3.28a... Ok
+e_select-2.1.3.28b... Ok
 e_select-2.1.3.28c... Ok
 e_select-2.1.3.28d...
 Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
+     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {TEXT A} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
 e_select-2.1.4.1.1... Ok
 e_select-2.1.4.1.2... Ok
 e_select-2.1.4.1.3... Ok
@@ -225,24 +189,18 @@ e_select-2.1.4.22...
 Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
      Got: [{idt3 b idt1 a} {}]
 e_select-2.1.4.23... Ok
-e_select-2.1.4.24...
-Expected: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {INTEGER 2} {INTEGER 1}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt1 a} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}}}}]
+e_select-2.1.4.24... Ok
 e_select-2.1.4.25...
 Expected: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {INTEGER 3} {TEXT b}} {{INTEGER 2} {INTEGER 1} {TEXT A} {INTEGER 1} {TEXT a}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
      Got: [{idt1 a b idt3 b} {{{INTEGER 1} {INTEGER 2} {TEXT B} {NULL {}} {NULL {}}} {{INTEGER 2} {INTEGER 1} {TEXT A} {NULL {}} {NULL {}}} {{INTEGER 3} {INTEGER 4} {TEXT D} {NULL {}} {NULL {}}} {{INTEGER 4} {NULL {}} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 5} {INTEGER 3} {NULL {}} {NULL {}} {NULL {}}}}]
 e_select-2.1.4.26... Ok
 e_select-2.1.4.27... Ok
-e_select-2.1.4.28a...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
-e_select-2.1.4.28b...
-Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}}}]
-     Got: [{idt3 b idt2 a idt1} {}]
+e_select-2.1.4.28a... Ok
+e_select-2.1.4.28b... Ok
 e_select-2.1.4.28c... Ok
 e_select-2.1.4.28d...
 Expected: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {INTEGER 1} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
-     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
+     Got: [{idt3 b idt2 a idt1} {{{INTEGER 1} {TEXT a} {TEXT A} {INTEGER 1} {INTEGER 2}} {{INTEGER 2} {TEXT c} {NULL {}} {NULL {}} {NULL {}}} {{INTEGER 3} {TEXT b} {NULL {}} {NULL {}} {NULL {}}}}]
 e_select-2.2.0... Ok
-28 errors out of 191 tests
-Failures on these tests: e_select-2.1.1.20 e_select-2.1.1.22 e_select-2.1.1.24 e_select-2.1.1.25 e_select-2.1.1.28a e_select-2.1.1.28b e_select-2.1.1.28d e_select-2.1.2.20 e_select-2.1.2.22 e_select-2.1.2.24 e_select-2.1.2.25 e_select-2.1.2.28a e_select-2.1.2.28b e_select-2.1.2.28d e_select-2.1.3.20 e_select-2.1.3.22 e_select-2.1.3.24 e_select-2.1.3.25 e_select-2.1.3.28a e_select-2.1.3.28b e_select-2.1.3.28d e_select-2.1.4.20 e_select-2.1.4.22 e_select-2.1.4.24 e_select-2.1.4.25 e_select-2.1.4.28a e_select-2.1.4.28b e_select-2.1.4.28d
+7 errors out of 191 tests
+Failures on these tests: e_select-2.1.1.28d e_select-2.1.2.28d e_select-2.1.3.28d e_select-2.1.4.20 e_select-2.1.4.22 e_select-2.1.4.25 e_select-2.1.4.28d
