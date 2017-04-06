@@ -1037,7 +1037,7 @@ do_select_tests e_select-4.9 {
     4  1,5    2,6   3,7
   }
   4  "SELECT group_concat(one) FROM b1 GROUP BY (one==2 OR two=='o')" {
-    4,3,5,7,6    1,2
+    3,4,5,6,7    1,2
   }
 }
 

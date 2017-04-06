@@ -95,9 +95,7 @@ e_select-1.1.4... Ok
 e_select-1.1.5... Ok
 e_select-1.1.6... Ok
 e_select-1.2.0... Ok
-e_select-1.2.1...
-Expected: ['IiJlsIPepMuAhU' X'10B00B897A15BAA02E3F98DCE8F2' NULL -16.87 -17.89 'linguistically']
-     Got: ['IiJlsIPepMuAhU' {'°zº .?Üèò'} NULL -16.87 -17.89 'linguistically']
+e_select-1.2.1... Ok
 e_select-1.2.2... Ok
 e_select-1.2.3... Ok
 e_select-1.3.1... Ok
@@ -270,19 +268,13 @@ e_select-4.9.0... Ok
 e_select-4.9.1... Ok
 e_select-4.9.2... Ok
 e_select-4.9.3... Ok
-e_select-4.9.4...
-Expected: [4,3,5,7,6 1,2]
-     Got: [3,4,5,6,7 1,2]
+e_select-4.9.4... Ok
 e_select-4.10.1... Ok
 e_select-4.10.2... Ok
 e_select-4.11.1... Ok
-e_select-4.11.2...
-Expected: [2 2]
-     Got: [1 1 1 1]
+e_select-4.11.2... Ok
 e_select-4.11.3... Ok
-e_select-4.11.4...
-Expected: [2 2]
-     Got: [1 1 1 1]
+e_select-4.11.4... Ok
 e_select-4.11.5... Ok
 e_select-4.11.6... Ok
 e_select-4.12.1... Ok
@@ -313,25 +305,15 @@ e_select-5.1.0... Ok
 e_select-5.1.1... Ok
 e_select-5.1.2... Ok
 e_select-5.3.1... Ok
-e_select-5.3.2...
-Expected: [One one Four four]
-     Got: [one four]
+e_select-5.3.2... Ok
 e_select-5.3.1... Ok
-e_select-5.3.2...
-Expected: [One one Four four]
-     Got: [one four]
-e_select-5.4.1...
-Expected: [One Two Three Four]
-     Got: [One Two Three Four one two three four]
-e_select-5.4.2...
-Expected: [One Four]
-     Got: [one four]
+e_select-5.3.2... Ok
+e_select-5.4.1... Ok
+e_select-5.4.2... Ok
 e_select-5.5.1... Ok
 e_select-5.6.1... Ok
 e_select-5.6.2... Ok
-e_select-5.6.3...
-Expected: [One Two Three Four]
-     Got: [One Two Three Four one two three four]
+e_select-5.6.3... Ok
 e_select-5.6.4... Ok
 e_select-7.1.0... Ok
 e_select-7.1.1... Ok
@@ -443,16 +425,10 @@ e_select-7.10.2... Ok
 e_select-7.10.3... Ok
 e_select-7.10.4... Ok
 e_select-7.10.5... Ok
-e_select-7.10.6...
-Expected: [abc]
-     Got: [Abc abc]
+e_select-7.10.6... Ok
 e_select-7.10.7... Ok
-e_select-7.10.8...
-Expected: [aBC]
-     Got: [Abc aBC]
-e_select-7.10.9...
-Expected: [aBC]
-     Got: [Abc aBC]
+e_select-7.10.8... Ok
+e_select-7.10.9... Ok
 e_select-7.10.0... Ok
 e_select-7.11.1... Ok
 e_select-7.11.2... Ok
@@ -515,16 +491,10 @@ e_select-8.8.2... Ok
 e_select-8.9.1... Ok
 e_select-8.9.2... Ok
 e_select-8.10.1... Ok
-e_select-8.10.2...
-Expected: [abc DEF ghi JKL]
-     Got: [DEF JKL abc ghi]
+e_select-8.10.2... Ok
 e_select-8.10.3... Ok
-e_select-8.11.1...
-Expected: [abc DEF ghi JKL]
-     Got: [DEF JKL abc ghi]
-e_select-8.11.2...
-Expected: [abc DEF ghi JKL]
-     Got: [DEF JKL abc ghi]
+e_select-8.11.1... Ok
+e_select-8.11.2... Ok
 e_select-8.12.1... Ok
 e_select-8.13.0... Ok
 e_select-8.13.1... Ok
@@ -597,5 +567,4 @@ e_select-9.11.9... Ok
 e_select-9.11.10... Ok
 e_select-9.11.11... Ok
 e_select-9.11.12... Ok
-15 errors out of 570 tests
-Failures on these tests: e_select-1.2.1 e_select-4.9.4 e_select-4.11.2 e_select-4.11.4 e_select-5.3.2 e_select-5.3.2 e_select-5.4.1 e_select-5.4.2 e_select-5.6.3 e_select-7.10.6 e_select-7.10.8 e_select-7.10.9 e_select-8.10.2 e_select-8.11.1 e_select-8.11.2
+0 errors out of 570 tests
