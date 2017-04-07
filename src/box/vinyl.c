@@ -118,6 +118,14 @@ struct vy_conf {
 	double bloom_fpr;
 };
 
+/** Part of vinyl environment for run read/write */
+struct vy_run_env {
+	/** Mempool for struct vy_page_read_task */
+	struct mempool read_task_pool;
+	/** Key for thread-local ZSTD context */
+	pthread_key_t zdctx_key;
+};
+
 struct vy_env {
 	/** Recovery status */
 	enum vy_status status;
@@ -137,18 +145,16 @@ struct vy_env {
 	struct tuple_format *key_format;
 	/** Mempool for struct vy_cursor */
 	struct mempool      cursor_pool;
-	/** Mempool for struct vy_page_read_task */
-	struct mempool      read_task_pool;
 	/** Allocator for tuples */
 	struct lsregion     allocator;
-	/** Key for thread-local ZSTD context */
-	pthread_key_t       zdctx_key;
 	/** Memory quota */
 	struct vy_quota     quota;
 	/** Timer for updating quota watermark. */
 	ev_timer            quota_timer;
-	/** Enviroment for cache subsystem */
+	/** Environment for cache subsystem */
 	struct vy_cache_env cache_env;
+	/** Environment for run subsystem */
+	struct vy_run_env run_env;
 	/** Local recovery context. */
 	struct vy_recovery *recovery;
 };
@@ -1020,8 +1026,8 @@ struct vy_page_read_task {
 	struct vy_page_info page_info;
 	/** vy_run with fd - ref. counted */
 	struct vy_run *run;
-	/** vy_env - contains environment with task mempool */
-	struct vy_env *env;
+	/** vy_run_env - contains environment with task mempool */
+	struct vy_run_env *run_env;
 	/** [out] resulting vinyl page */
 	struct vy_page *page;
 	/** [out] result code */
@@ -7407,6 +7413,22 @@ vy_squash_queue_new(void);
 static void
 vy_squash_queue_delete(struct vy_squash_queue *q);
 
+void
+vy_run_env_create(struct vy_run_env *env)
+{
+	tt_pthread_key_create(&env->zdctx_key, vy_free_zdctx);
+
+	struct slab_cache *slab_cache = cord_slab_cache();
+	mempool_create(&env->read_task_pool, slab_cache,
+		       sizeof(struct vy_page_read_task));
+}
+
+void
+vy_run_env_destroy(struct vy_run_env *env)
+{
+	mempool_destroy(&env->read_task_pool);
+}
+
 struct vy_env *
 vy_env_new(void)
 {
@@ -7442,10 +7464,7 @@ vy_env_new(void)
 	struct slab_cache *slab_cache = cord_slab_cache();
 	mempool_create(&e->cursor_pool, slab_cache,
 	               sizeof(struct vy_cursor));
-	mempool_create(&e->read_task_pool, slab_cache,
-		       sizeof(struct vy_page_read_task));
 	lsregion_create(&e->allocator, slab_cache->arena);
-	tt_pthread_key_create(&e->zdctx_key, vy_free_zdctx);
 
 	vy_quota_init(&e->quota, vy_scheduler_quota_cb, e->scheduler);
 	ev_timer_init(&e->quota_timer, vy_env_quota_timer_cb, 0, 1.);
@@ -7453,6 +7472,7 @@ vy_env_new(void)
 	ev_timer_start(loop(), &e->quota_timer);
 	vy_cache_env_create(&e->cache_env, slab_cache,
 			    e->conf->cache);
+	vy_run_env_create(&e->run_env);
 	vy_log_init(e->conf->path);
 	return e;
 error_key_format:
@@ -7484,9 +7504,9 @@ vy_env_delete(struct vy_env *e)
 	vy_stat_delete(e->stat);
 	tuple_format_ref(e->key_format, -1);
 	mempool_destroy(&e->cursor_pool);
-	mempool_destroy(&e->read_task_pool);
+	vy_run_env_destroy(&e->run_env);
 	lsregion_destroy(&e->allocator);
-	tt_pthread_key_delete(e->zdctx_key);
+	tt_pthread_key_delete(e->run_env.zdctx_key);
 	vy_cache_env_destroy(&e->cache_env);
 	if (e->recovery != NULL)
 		vy_recovery_delete(e->recovery);
@@ -7617,9 +7637,14 @@ struct vy_run_iterator {
 	/** Usage statistics */
 	struct vy_iterator_stat *stat;
 
-	/* Members needed for memory allocation and disk access */
-	/* index */
-	struct vy_index *index;
+	/* environment for memory allocation and disk access */
+	struct vy_run_env *run_env;
+	/* comparison arg */
+	struct index_def *index_def;
+	/* original index_def */
+	struct index_def *user_index_def;
+	/* should the iterator use coio task for reading or not */
+	bool coio_read;
 	/**
 	 * Format ot allocate REPLACE and DELETE tuples read from
 	 * pages.
@@ -7663,9 +7688,10 @@ struct vy_run_iterator {
 };
 
 static void
-vy_run_iterator_open(struct vy_run_iterator *itr, struct vy_iterator_stat *stat,
-		     struct vy_index *index, struct vy_run *run,
-		     enum iterator_type iterator_type,
+vy_run_iterator_open(struct vy_run_iterator *itr, bool coio_read,
+		     struct vy_iterator_stat *stat, struct vy_run_env *run_env,
+		     struct index_def *index_def, struct index_def *user_index_def,
+		     struct vy_run *run, enum iterator_type iterator_type,
 		     const struct tuple *key, const int64_t *vlsn,
 		     struct tuple_format *format,
 		     struct tuple_format *upsert_format);
@@ -7933,7 +7959,7 @@ error:
  * Get thread local zstd decompression context
  */
 static ZSTD_DStream *
-vy_env_get_zdctx(struct vy_env *env)
+vy_env_get_zdctx(struct vy_run_env *env)
 {
 	ZSTD_DStream *zdctx = tt_pthread_getspecific(env->zdctx_key);
 	if (zdctx == NULL) {
@@ -7955,7 +7981,7 @@ static int
 vy_page_read_cb(struct coio_task *base)
 {
 	struct vy_page_read_task *task = (struct vy_page_read_task *)base;
-	ZSTD_DStream *zdctx = vy_env_get_zdctx(task->env);
+	ZSTD_DStream *zdctx = vy_env_get_zdctx(task->run_env);
 	if (zdctx == NULL)
 		return -1;
 	task->rc = vy_page_read(task->page, &task->page_info,
@@ -7973,7 +7999,7 @@ vy_page_read_cb_free(struct coio_task *base)
 	vy_page_delete(task->page);
 	vy_run_unref(task->run);
 	coio_task_destroy(&task->base);
-	mempool_free(&task->env->read_task_pool, task);
+	mempool_free(&task->run_env->read_task_pool, task);
 	return 0;
 }
 
@@ -7988,9 +8014,6 @@ static NODISCARD int
 vy_run_iterator_load_page(struct vy_run_iterator *itr, uint32_t page_no,
 			  struct vy_page **result)
 {
-	struct vy_index *index = itr->index;
-	const struct vy_env *env = index->env;
-
 	/* Check cache */
 	*result = vy_run_iterator_cache_get(itr, page_no);
 	if (*result != NULL)
@@ -8004,7 +8027,7 @@ vy_run_iterator_load_page(struct vy_run_iterator *itr, uint32_t page_no,
 
 	/* Read page data from the disk */
 	int rc;
-	if (cord_is_main() && env->status == VINYL_ONLINE) {
+	if (itr->coio_read) {
 		/*
 		 * Use coeio for TX thread **after recovery**.
 		 * Please note that vy_run can go away after yield.
@@ -8014,7 +8037,7 @@ vy_run_iterator_load_page(struct vy_run_iterator *itr, uint32_t page_no,
 
 		/* Allocate a coio task */
 		struct vy_page_read_task *task =
-			(struct vy_page_read_task *)mempool_alloc(&itr->index->env->read_task_pool);
+			(struct vy_page_read_task *)mempool_alloc(&itr->run_env->read_task_pool);
 		if (task == NULL) {
 			diag_set(OutOfMemory, sizeof(*task), "malloc",
 				 "vy_page_read_task");
@@ -8031,7 +8054,7 @@ vy_run_iterator_load_page(struct vy_run_iterator *itr, uint32_t page_no,
 		task->run = itr->run;
 		vy_run_ref(task->run);
 		task->page_info = *page_info;
-		task->env = index->env;
+		task->run_env = itr->run_env;
 		task->page = page;
 
 		/* Post task to coeio */
@@ -8047,14 +8070,13 @@ vy_run_iterator_load_page(struct vy_run_iterator *itr, uint32_t page_no,
 		}
 
 		coio_task_destroy(&task->base);
-		mempool_free(&task->env->read_task_pool, task);
+		mempool_free(&task->run_env->read_task_pool, task);
 
 		if (vy_run_unref(itr->run)) {
 			/*
 			 * The run's gone so the iterator isn't
 			 * valid anymore.
 			 */
-			itr->index = NULL;
 			itr->run = NULL;
 			vy_page_delete(page);
 			return -2;
@@ -8064,7 +8086,7 @@ vy_run_iterator_load_page(struct vy_run_iterator *itr, uint32_t page_no,
 		 * Optimization: use blocked I/O for non-TX threads or
 		 * during WAL recovery (env->status != VINYL_ONLINE).
 		 */
-		ZSTD_DStream *zdctx = vy_env_get_zdctx(itr->index->env);
+		ZSTD_DStream *zdctx = vy_env_get_zdctx(itr->run_env);
 		if (zdctx == NULL) {
 			vy_page_delete(page);
 			return -1;
@@ -8104,7 +8126,7 @@ vy_run_iterator_read(struct vy_run_iterator *itr,
 	if (rc != 0)
 		return rc;
 	*stmt = vy_page_stmt(page, pos.pos_in_page, itr->format,
-			     itr->upsert_format, itr->index->index_def);
+			     itr->upsert_format, itr->index_def);
 	if (*stmt == NULL)
 		return -1;
 	return 0;
@@ -8126,14 +8148,13 @@ vy_run_iterator_search_page(struct vy_run_iterator *itr,
 	/* for upper bound we change zero comparison result to -1 */
 	int zero_cmp = itr->iterator_type == ITER_GT ||
 		       itr->iterator_type == ITER_LE ? -1 : 0;
-	struct vy_index *idx = itr->index;
 	while (beg != end) {
 		uint32_t mid = beg + (end - beg) / 2;
 		struct vy_page_info *page_info;
 		page_info = vy_run_page_info(itr->run, mid);
 		int cmp;
 		cmp = -vy_stmt_compare_with_raw_key(key, page_info->min_key,
-						    &idx->index_def->key_def);
+						    &itr->index_def->key_def);
 		cmp = cmp ? cmp : zero_cmp;
 		*equal_key = *equal_key || cmp == 0;
 		if (cmp < 0)
@@ -8161,15 +8182,14 @@ vy_run_iterator_search_in_page(struct vy_run_iterator *itr,
 	/* for upper bound we change zero comparison result to -1 */
 	int zero_cmp = itr->iterator_type == ITER_GT ||
 		       itr->iterator_type == ITER_LE ? -1 : 0;
-	struct vy_index *idx = itr->index;
 	while (beg != end) {
 		uint32_t mid = beg + (end - beg) / 2;
 		struct tuple *fnd_key = vy_page_stmt(page, mid, itr->format,
 						     itr->upsert_format,
-						     itr->index->index_def);
+						     itr->index_def);
 		if (fnd_key == NULL)
 			return end;
-		int cmp = vy_stmt_compare(fnd_key, key, &idx->index_def->key_def);
+		int cmp = vy_stmt_compare(fnd_key, key, &itr->index_def->key_def);
 		cmp = cmp ? cmp : zero_cmp;
 		*equal_key = *equal_key || cmp == 0;
 		if (cmp < 0)
@@ -8280,7 +8300,7 @@ vy_run_iterator_find_lsn(struct vy_run_iterator *itr, struct tuple **ret)
 {
 	assert(itr->curr_pos.page_no < itr->run->info.count);
 	struct tuple *stmt;
-	struct index_def *index_def = itr->index->index_def;
+	struct index_def *index_def = itr->index_def;
 	const struct tuple *key = itr->key;
 	enum iterator_type iterator_type = itr->iterator_type;
 	*ret = NULL;
@@ -8377,7 +8397,7 @@ vy_run_iterator_start(struct vy_run_iterator *itr, struct tuple **ret)
 	itr->search_started = true;
 	*ret = NULL;
 
-	struct index_def *user_index_def = itr->index->user_index_def;
+	struct index_def *user_index_def = itr->user_index_def;
 	if (itr->run->info.has_bloom && itr->iterator_type == ITER_EQ &&
 	    tuple_field_count(itr->key) >= user_index_def->key_def.part_count) {
 		uint32_t hash;
@@ -8478,9 +8498,10 @@ static struct vy_stmt_iterator_iface vy_run_iterator_iface;
  * Open the iterator.
  */
 static void
-vy_run_iterator_open(struct vy_run_iterator *itr, struct vy_iterator_stat *stat,
-		     struct vy_index *index, struct vy_run *run,
-		     enum iterator_type iterator_type,
+vy_run_iterator_open(struct vy_run_iterator *itr, bool coio_read,
+		     struct vy_iterator_stat *stat, struct vy_run_env *run_env,
+		     struct index_def *index_def, struct index_def *user_index_def,
+		     struct vy_run *run, enum iterator_type iterator_type,
 		     const struct tuple *key, const int64_t *vlsn,
 		     struct tuple_format *format,
 		     struct tuple_format *upsert_format)
@@ -8489,8 +8510,11 @@ vy_run_iterator_open(struct vy_run_iterator *itr, struct vy_iterator_stat *stat,
 	itr->stat = stat;
 	itr->format = format;
 	itr->upsert_format = upsert_format;
-	itr->index = index;
+	itr->run_env = run_env;
+	itr->index_def = index_def;
+	itr->user_index_def = user_index_def;
 	itr->run = run;
+	itr->coio_read = coio_read;
 
 	itr->iterator_type = iterator_type;
 	itr->key = key;
@@ -8570,7 +8594,7 @@ vy_run_iterator_next_key(struct vy_stmt_iterator *vitr, struct tuple **ret,
 		return vy_run_iterator_start(itr, ret);
 	uint32_t end_page = itr->run->info.count;
 	assert(itr->curr_pos.page_no <= end_page);
-	struct index_def *index_def = itr->index->index_def;
+	struct index_def *index_def = itr->index_def;
 	if (itr->iterator_type == ITER_LE || itr->iterator_type == ITER_LT) {
 		if (itr->curr_pos.page_no == 0 &&
 		    itr->curr_pos.pos_in_page == 0) {
@@ -8698,8 +8722,7 @@ vy_run_iterator_next_lsn(struct vy_stmt_iterator *vitr, struct tuple **ret)
 	 *  So in the case no page will be unloaded and we don't need
 	 *  page lock
 	 */
-	struct index_def *index_def = itr->index->index_def;
-	int cmp = vy_tuple_compare(cur_key, next_key, &index_def->key_def);
+	int cmp = vy_tuple_compare(cur_key, next_key, &itr->index_def->key_def);
 	tuple_unref(cur_key);
 	cur_key = NULL;
 	tuple_unref(next_key);
@@ -8763,7 +8786,7 @@ vy_run_iterator_restore(struct vy_stmt_iterator *vitr,
 		return rc;
 	else if (next == NULL)
 		return 0;
-	struct key_def *def = &itr->index->index_def->key_def;
+	struct key_def *def = &itr->index_def->key_def;
 	bool position_changed = true;
 	if (vy_stmt_compare(next, last_stmt, def) == 0) {
 		position_changed = false;
@@ -9755,8 +9778,11 @@ vy_write_iterator_add_run(struct vy_write_iterator *wi, struct vy_run *run)
 	if (src == NULL)
 		return -1;
 	static const int64_t vlsn = INT64_MAX;
-	vy_run_iterator_open(&src->run_iterator, &wi->run_iterator_stat,
-			     wi->index, run, ITER_GE, wi->key, &vlsn,
+	vy_run_iterator_open(&src->run_iterator, false,
+			     &wi->run_iterator_stat,
+			     &wi->index->env->run_env, wi->index->index_def,
+			     wi->index->user_index_def, run, ITER_GE,
+			     wi->key, &vlsn,
 			     wi->surrogate_format, wi->upsert_format);
 	return 0;
 }
@@ -9985,11 +10011,15 @@ vy_read_iterator_add_disk(struct vy_read_iterator *itr)
 	 */
 	if (itr->index->space_index_count == 1)
 		format = itr->index->space_format;
+	bool coio_read = cord_is_main() && itr->index->env->status == VINYL_ONLINE;
 	rlist_foreach_entry(run, &itr->curr_range->runs, in_range) {
 		struct vy_merge_src *sub_src = vy_merge_iterator_add(
 			&itr->merge_iterator, false, true);
-		vy_run_iterator_open(&sub_src->run_iterator, stat,
-				     itr->index, run, itr->iterator_type,
+		vy_run_iterator_open(&sub_src->run_iterator, coio_read, stat,
+				     &itr->index->env->run_env,
+				     itr->index->index_def,
+				     itr->index->user_index_def,
+				     run, itr->iterator_type,
 				     itr->key, itr->vlsn, format,
 				     itr->index->upsert_format);
 	}
@@ -10269,8 +10299,10 @@ vy_read_iterator_close(struct vy_read_iterator *itr)
 
 /** Argument passed to vy_join_cb(). */
 struct vy_join_arg {
-	/** Vinyl environment. */
-	struct vy_env *env;
+	/** Vinyl run environment. */
+	struct vy_run_env *env;
+	/* path to vinyl_dir */
+	char *path;
 	/** Recovery context to relay. */
 	struct vy_recovery *recovery;
 	/** Stream to relay statements to. */
@@ -10303,8 +10335,7 @@ vy_join_cb(const struct vy_log_record *record, void *cb_arg)
 	if (record->type == VY_LOG_CREATE_INDEX) {
 		arg->space_id = record->space_id;
 		arg->index_id = record->index_id;
-		vy_index_snprint_path(arg->index_path, PATH_MAX,
-				      arg->env->conf->path,
+		vy_index_snprint_path(arg->index_path, PATH_MAX, arg->path,
 				      arg->space_id, arg->index_id);
 	}
 
@@ -10378,7 +10409,8 @@ vy_join(struct vy_env *env, struct vclock *vclock, struct xstream *stream)
 {
 	(void)vclock;
 	struct vy_join_arg arg = {
-		.env = env,
+		.env = &env->run_env,
+		.path = env->conf->path,
 		.stream = stream,
 	};
 
