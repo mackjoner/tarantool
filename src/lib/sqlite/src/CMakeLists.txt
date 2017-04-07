@@ -205,6 +205,10 @@ add_library(testfixture SHARED
 )
 add_dependencies(testfixture generate_sqlite3_files)
 
+if (APPLE)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined suppress -flat_namespace")
+endif(APPLE)
+
 set_target_properties(testfixture PROPERTIES COMPILE_DEFINITIONS
     "${TEST_DEFINITIONS}")
 

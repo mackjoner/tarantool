@@ -419,7 +419,6 @@ sqlite3_db_release_memory
 sqlite3_db_status
 sqlite3DebugPrintf
 sqlite3_declare_vtab
-sqlite3_delete_database
 sqlite3_diskfull
 sqlite3_diskfull_pending
 sqlite3_enable_load_extension

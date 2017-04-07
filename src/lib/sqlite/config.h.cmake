@@ -41,7 +41,9 @@
 #define HAVE_PREAD 1
 
 /* Define to 1 if you have the `pread64' function. */
+#ifndef __APPLE__
 #define HAVE_PREAD64 1
+#endif
 
 /* Define to 1 if you have the `pwrite' function. */
 #define HAVE_PWRITE 1
