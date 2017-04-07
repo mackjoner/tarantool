@@ -1,6 +1,5 @@
 in2-1... Ok
-in2-2...
-Error: unknown error
+in2-2... Ok
 in2-3... Ok
 in2-4... Ok
 in2-5... Ok
@@ -1998,5 +1997,4 @@ in2-1996... Ok
 in2-1997... Ok
 in2-1998... Ok
 in2-1999... Ok
-1 errors out of 2000 tests
-Failures on these tests: in2-2
+0 errors out of 2000 tests

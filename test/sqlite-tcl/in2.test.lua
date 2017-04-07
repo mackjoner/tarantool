@@ -37,7 +37,7 @@ do_test in2-2 {
 
     for {set ::ii 0} {$::ii < $::N} {incr ::ii} {
       set ::t [format "x%04d" $ii]
-      execsql {INSERT INTO a VALUES(NULL, $::t)}
+      execsql {INSERT INTO a VALUES(4001 + $ii, $::t)}
     }
   }
 } {}
