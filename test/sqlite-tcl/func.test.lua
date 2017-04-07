@@ -21,20 +21,22 @@ set testprefix func
 # Create a table to work with.
 #
 do_test func-0.0 {
-  execsql {CREATE TABLE tbl1(id integer primary key autoincrement, t1 text)}
+  execsql {CREATE TABLE tbl1(id integer primary key, t1 text)}
+  set i 1
   foreach word {this program is free software} {
-    execsql "INSERT INTO tbl1(t1) VALUES('$word')"
+    execsql "INSERT INTO tbl1(id, t1) VALUES($i, '$word')"
+    incr i
   }
   execsql {SELECT t1 FROM tbl1 ORDER BY t1}
 } {free is program software this}
 do_test func-0.1 {
   execsql {
-     CREATE TABLE t2(id integer primary key autoincrement, a);
-     INSERT INTO t2(a) VALUES(1);
-     INSERT INTO t2(a) VALUES(NULL);
-     INSERT INTO t2(a) VALUES(345);
-     INSERT INTO t2(a) VALUES(NULL);
-     INSERT INTO t2(a) VALUES(67890);
+     CREATE TABLE t2(id integer primary key, a);
+     INSERT INTO t2(id,a) VALUES(1, 1);
+     INSERT INTO t2(id,a) VALUES(2, NULL);
+     INSERT INTO t2(id,a) VALUES(3, 345);
+     INSERT INTO t2(id,a) VALUES(4, NULL);
+     INSERT INTO t2(id,a) VALUES(5, 67890);
      SELECT a FROM t2;
   }
 } {1 {} 345 {} 67890}
@@ -104,8 +106,10 @@ if {"\u1234"!="u1234"} {
 #
 do_test func-3.0 {
   execsql {DELETE FROM tbl1}
+  set i 1
   foreach word "contains UTF-8 characters hi\u1234ho" {
-    execsql "INSERT INTO tbl1(t1) VALUES('$word')"
+    execsql "INSERT INTO tbl1(id, t1) VALUES($i, '$word')"
+    incr i
   }
   execsql {SELECT t1 FROM tbl1 ORDER BY t1}
 } "UTF-8 characters contains hi\u1234ho"
@@ -141,8 +145,10 @@ do_test func-3.10 {
 } "TF- ter ain i\u1234h"
 do_test func-3.99 {
   execsql {DELETE FROM tbl1}
+  set i 1
   foreach word {this program is free software} {
-    execsql "INSERT INTO tbl1(t1) VALUES('$word')"
+    execsql "INSERT INTO tbl1(id, t1) VALUES($i, '$word')"
+    incr i
   }
   execsql {SELECT t1 FROM tbl1}
 } {this program is free software}
@@ -154,10 +160,10 @@ do_test func-3.99 {
 ifcapable !floatingpoint {
   do_test func-4.1 {
     execsql {
-      CREATE TABLE t1(id integer primary key autoincrement, a,b,c);
-      INSERT INTO t1(a,b,c) VALUES(1,2,3);
-      INSERT INTO t1(a,b,c) VALUES(2,12345678901234,-1234567890);
-      INSERT INTO t1(a,b,c) VALUES(3,-2,-5);
+      CREATE TABLE t1(id integer primary key, a,b,c);
+      INSERT INTO t1(id, a,b,c) VALUES(1, 1,2,3);
+      INSERT INTO t1(id, a,b,c) VALUES(2, 2,12345678901234,-1234567890);
+      INSERT INTO t1(id, a,b,c) VALUES(3, 3,-2,-5);
     }
     catchsql {SELECT abs(a,b) FROM t1}
   } {1 {wrong number of arguments to function abs()}}
@@ -165,10 +171,10 @@ ifcapable !floatingpoint {
 ifcapable floatingpoint {
   do_test func-4.1 {
     execsql {
-      CREATE TABLE t1(id integer primary key autoincrement, a,b,c);
-      INSERT INTO t1(a,b,c) VALUES(1,2,3);
-      INSERT INTO t1(a,b,c) VALUES(2,1.2345678901234,-12345.67890);
-      INSERT INTO t1(a,b,c) VALUES(3,-2,-5);
+      CREATE TABLE t1(id integer primary key, a,b,c);
+      INSERT INTO t1(id, a,b,c) VALUES(1, 1,2,3);
+      INSERT INTO t1(id, a,b,c) VALUES(2, 2,1.2345678901234,-12345.67890);
+      INSERT INTO t1(id, a,b,c) VALUES(3, 3,-2,-5);
     }
     catchsql {SELECT abs(a,b) FROM t1}
   } {1 {wrong number of arguments to function abs()}}
