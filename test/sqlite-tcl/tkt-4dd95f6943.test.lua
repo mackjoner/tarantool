@@ -26,7 +26,7 @@ foreach {tn1 idx} {
   1 { CREATE INDEX i1 ON t1(x ASC) }
   2 { CREATE INDEX i1 ON t1(x DESC) }
 } {
-  do_execsql_test 1.$tn1.1 { DROP INDEX IF EXISTS '517_1_i1'; }
+  do_execsql_test 1.$tn1.1 { DROP INDEX IF EXISTS 'i1'; }
   do_execsql_test 1.$tn1.2 $idx
 
   do_execsql_test 1.$tn1.3 {
@@ -65,7 +65,7 @@ foreach {tn1 idx} {
   7 { CREATE INDEX i1 ON t2(y DESC, x ASC) }
   8 { CREATE INDEX i1 ON t2(y DESC, x DESC) }
 } {
-  do_execsql_test 2.$tn1.1 { DROP INDEX IF EXISTS '522_1_i1'; }
+  do_execsql_test 2.$tn1.1 { DROP INDEX IF EXISTS 'i1'; }
   do_execsql_test 2.$tn1.2 $idx
 
   foreach {tn2 inexpr} {
@@ -144,7 +144,7 @@ foreach {tn idxdir sortdir sortdata} {
 } {
 
   do_execsql_test 3.$tn "
-    DROP INDEX IF EXISTS '537_1_i8';
+    DROP INDEX IF EXISTS 'i8';
     CREATE UNIQUE INDEX i8 ON t8(y $idxdir);
     SELECT x FROM t7 WHERE x IN (SELECT y FROM t8) ORDER BY x $sortdir;
   " $sortdata
