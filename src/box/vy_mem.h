@@ -133,12 +133,16 @@ struct vy_mem {
 	struct rlist in_frozen;
 	/** Link in scheduler->dirty_mems list. */
 	struct rlist in_dirty;
+	/** Link in scheduler->committed_mems list. */
+	struct rlist in_committed;
 	/** BPS tree */
 	struct vy_mem_tree tree;
 	/** The total size of all tuples in this tree in bytes */
 	size_t used;
 	/** The minimum value of stmt->lsn in this tree */
 	int64_t min_lsn;
+	/** The minimum lsregion ID that was allocated for that mem */
+	int64_t min_rid;
 	/* A key definition for this index. */
 	struct index_def *index_def;
 	/** version is initially 0 and is incremented on every write */
@@ -251,6 +255,22 @@ vy_mem_older_lsn(struct vy_mem *mem, const struct tuple *stmt);
  */
 int
 vy_mem_insert(struct vy_mem *mem, const struct tuple *stmt);
+
+/**
+ * Confirm insertion of a statement into the in-memory level.
+ * @param mem        vy_mem.
+ * @param stmt       Vinyl statement.
+ */
+void
+vy_mem_confirm(struct vy_mem *mem, const struct tuple *stmt);
+
+/**
+ * Remove a statement from the in-memory level.
+ * @param mem        vy_mem.
+ * @param stmt       Vinyl statement.
+ */
+void
+vy_mem_erase(struct vy_mem *mem, const struct tuple *stmt);
 
 /**
  * Iterator for in-memory level.

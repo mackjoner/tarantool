@@ -73,6 +73,7 @@ vy_mem_new(struct lsregion *allocator, const int64_t *allocator_lsn,
 		return NULL;
 	}
 	index->min_lsn = INT64_MAX;
+	index->min_rid = INT64_MAX;
 	index->used = 0;
 	index->index_def = index_def;
 	index->version = 0;
@@ -91,6 +92,7 @@ vy_mem_new(struct lsregion *allocator, const int64_t *allocator_lsn,
 			   vy_mem_tree_extent_free, index);
 	rlist_create(&index->in_frozen);
 	rlist_create(&index->in_dirty);
+	rlist_create(&index->in_committed);
 	index->pin_count = 0;
 	ipc_cond_create(&index->pin_cond);
 	return index;
@@ -155,18 +157,44 @@ vy_mem_insert(struct vy_mem *mem, const struct tuple *stmt)
 	assert(vy_stmt_is_region_allocated(stmt));
 	size_t size = tuple_size(stmt);
 	const struct tuple *replaced_stmt = NULL;
-	int rc = vy_mem_tree_insert(&mem->tree, stmt, &replaced_stmt);
+	int rc =  vy_mem_tree_insert(&mem->tree, stmt, &replaced_stmt);
 	if (rc != 0)
-		return -1;
-
+		return rc;
 	if (mem->used == 0)
+		mem->min_rid = vy_stmt_lsn(stmt);
+	mem->version++;
+	mem->used += size;
+	return 0;
+}
+
+void
+vy_mem_confirm(struct vy_mem *mem, const struct tuple *stmt)
+{
+	/* Check if the statement can be inserted in the vy_mem. */
+	assert(stmt->format_id == tuple_format_id(mem->format_with_colmask) ||
+	       stmt->format_id == tuple_format_id(mem->format) ||
+	       stmt->format_id == tuple_format_id(mem->upsert_format));
+	/* The statement must be from a lsregion. */
+	assert(vy_stmt_is_region_allocated(stmt));
+	if (mem->min_lsn == INT64_MAX)
 		mem->min_lsn = vy_stmt_lsn(stmt);
 	assert(mem->min_lsn <= vy_stmt_lsn(stmt));
+}
 
-	mem->used += size;
+void
+vy_mem_erase(struct vy_mem *mem, const struct tuple *stmt)
+{
+	/* Check if the statement can be inserted in the vy_mem. */
+	assert(stmt->format_id == tuple_format_id(mem->format_with_colmask) ||
+	       stmt->format_id == tuple_format_id(mem->format) ||
+	       stmt->format_id == tuple_format_id(mem->upsert_format));
+	/* The statement must be from a lsregion. */
+	assert(vy_stmt_is_region_allocated(stmt));
+	int rc = vy_mem_tree_delete(&mem->tree, stmt);
+	assert(rc == 0);
+	(void)rc;
+
 	mem->version++;
-
-	return 0;
 }
 
 /* }}} vy_mem */
@@ -320,8 +348,11 @@ vy_mem_iterator_start(struct vy_mem_iterator *itr)
  * Restores iterator if the mem have been changed
  */
 static void
-vy_mem_iterator_check_version(struct vy_mem_iterator *itr)
+vy_mem_iterator_check_version(struct vy_mem_iterator *itr,
+			      bool *step_was_made, bool *step_to_next_key)
 {
+	*step_was_made = false;
+	*step_to_next_key = false;
 	assert(itr->curr_stmt != NULL);
 	if (itr->version == itr->mem->version)
 		return;
@@ -336,7 +367,21 @@ vy_mem_iterator_check_version(struct vy_mem_iterator *itr)
 	bool exact;
 	itr->curr_pos = vy_mem_tree_lower_bound(&itr->mem->tree,
 						&tree_key, &exact);
-	assert(exact);
+	if (exact)
+		return;
+	*step_was_made = true;
+	const struct tuple *prev = itr->curr_stmt;
+	assert(prev != NULL);
+	itr->curr_stmt = NULL;
+	if (iterator_direction(itr->iterator_type) < 0)
+		vy_mem_tree_iterator_prev(&itr->mem->tree, &itr->curr_pos);
+	if (vy_mem_tree_iterator_is_invalid(&itr->curr_pos)) {
+		*step_to_next_key = true;
+		return;
+	}
+	itr->curr_stmt = vy_mem_iterator_curr_stmt(itr);
+	if (tuple_compare(itr->curr_stmt, prev, &itr->mem->index_def->key_def))
+		*step_to_next_key = true;
 }
 
 /* }}} vy_mem_iterator support functions */
@@ -387,18 +432,24 @@ vy_mem_iterator_next_key_impl(struct vy_mem_iterator *itr)
 	if (!itr->curr_stmt) /* End of search. */
 		return 1;
 	assert(!vy_mem_tree_iterator_is_invalid(&itr->curr_pos));
-	vy_mem_iterator_check_version(itr);
-	assert(itr->curr_stmt == vy_mem_iterator_curr_stmt(itr));
 	struct index_def *index_def = itr->mem->index_def;
+	bool step_was_made, step_to_next_key;
+	vy_mem_iterator_check_version(itr, &step_was_made, &step_to_next_key);
+	assert(itr->curr_stmt == NULL ||
+	       itr->curr_stmt == vy_mem_iterator_curr_stmt(itr));
 
-	const struct tuple *prev_stmt = itr->curr_stmt;
-	do {
-		if (vy_mem_iterator_step(itr) != 0) {
-			itr->curr_stmt = NULL;
-			return 1;
-		}
-	} while (vy_stmt_compare(prev_stmt, itr->curr_stmt,
-				 &index_def->key_def) == 0);
+	if (!step_to_next_key) {
+		const struct tuple *prev_stmt = itr->curr_stmt;
+		do {
+			if (vy_mem_iterator_step(itr) != 0) {
+				itr->curr_stmt = NULL;
+				return 1;
+			}
+		} while (vy_stmt_compare(prev_stmt, itr->curr_stmt,
+					 &index_def->key_def) == 0);
+	} else if (itr->curr_stmt == NULL) {
+		return 1;
+	}
 
 	if (itr->iterator_type == ITER_EQ &&
 	    vy_stmt_compare(itr->key, itr->curr_stmt, &index_def->key_def) != 0) {
@@ -439,8 +490,20 @@ vy_mem_iterator_next_lsn_impl(struct vy_mem_iterator *itr)
 	if (!itr->curr_stmt) /* End of search. */
 		return 1;
 	assert(!vy_mem_tree_iterator_is_invalid(&itr->curr_pos));
-	vy_mem_iterator_check_version(itr);
-	assert(itr->curr_stmt == vy_mem_iterator_curr_stmt(itr));
+	bool step_was_made, step_to_next_key;
+	const struct tuple *save_curr_stmt = itr->curr_stmt;
+	struct vy_mem_tree_iterator save_curr_pos = itr->curr_pos;
+	vy_mem_iterator_check_version(itr, &step_was_made, &step_to_next_key);
+	assert(itr->curr_stmt == NULL ||
+	       itr->curr_stmt == vy_mem_iterator_curr_stmt(itr));
+	if (step_was_made) {
+		if (!step_to_next_key)
+			return 0;
+		/* Too great step for next_lsn, rollback it */
+		itr->curr_stmt = save_curr_stmt;
+		itr->curr_pos = save_curr_pos;
+		return 1;
+	}
 	struct index_def *index_def = itr->mem->index_def;
 
 	struct vy_mem_tree_iterator next_pos = itr->curr_pos;
@@ -567,7 +630,10 @@ vy_mem_iterator_restore(struct vy_stmt_iterator *vitr,
 		return was_stmt != itr->curr_stmt;
 	}
 
-	vy_mem_iterator_check_version(itr);
+	bool step_was_made, step_to_next_key;
+	vy_mem_iterator_check_version(itr, &step_was_made, &step_to_next_key);
+	if (step_was_made)
+		return 1;
 	struct vy_mem_tree_iterator pos = itr->curr_pos;
 	rc = 0;
 	if (itr->iterator_type == ITER_GE || itr->iterator_type == ITER_GT ||
