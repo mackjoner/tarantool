@@ -70,6 +70,7 @@ ifcapable memorymanage {
 }
 
 
+# Tarantool: x is PK now, so NULL is not allowed.
 do_execsql_test 1.6 {
   BEGIN;
     DROP TABLE t1;
@@ -81,7 +82,7 @@ do_execsql_test 1.6 {
     INSERT INTO t1 VALUES('e');
     INSERT INTO t1 VALUES('f');
     INSERT INTO t1 VALUES('g');
-    INSERT INTO t1 VALUES(NULL);
+    -- INSERT INTO t1 VALUES(NULL);
     INSERT INTO t1 SELECT randomblob(1202) FROM t1;     --    16
     INSERT INTO t1 SELECT randomblob(2202) FROM t1;     --    32
     INSERT INTO t1 SELECT randomblob(3202) FROM t1;     --    64
