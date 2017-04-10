@@ -371,7 +371,7 @@ t;
   - 'box.error.ACTIVE_TRANSACTION : 79'
   - 'box.error.EXACT_FIELD_COUNT : 38'
   - 'box.error.GUEST_USER_PASSWORD : 96'
-  - 'box.error.NO_ACTIVE_TRANSACTION : 80'
+  - 'box.error.READ_VIEW_ABORTED : 80'
   - 'box.error.TUPLE_FORMAT_LIMIT : 16'
   - 'box.error.PROC_C : 102'
   - 'box.error.SUB_STMT_MAX : 121'

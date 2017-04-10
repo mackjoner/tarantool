@@ -132,7 +132,7 @@ struct errcode_record {
 	/* 77 */_(ER_NO_CONNECTION,		"Connection is not established") \
 	/* 78 */_(ER_TIMEOUT,			"Timeout exceeded") \
 	/* 79 */_(ER_ACTIVE_TRANSACTION,	"Operation is not permitted when there is an active transaction ") \
-	/* 80 */_(ER_NO_ACTIVE_TRANSACTION,	"Operation is not permitted when there is no active transaction ") \
+	/* 80 */_(ER_READ_VIEW_ABORTED,		"The read view is aborted") \
 	/* 81 */_(ER_CROSS_ENGINE_TRANSACTION,	"A multi-statement transaction can not use multiple storage engines") \
 	/* 82 */_(ER_NO_SUCH_ROLE,		"Role '%s' is not found") \
 	/* 83 */_(ER_ROLE_EXISTS,		"Role '%s' already exists") \

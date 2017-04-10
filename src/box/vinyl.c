@@ -10798,7 +10798,7 @@ vy_cursor_next(struct vy_cursor *c, struct tuple **result)
 	*result = NULL;
 
 	if (c->tx == NULL) {
-		diag_set(ClientError, ER_NO_ACTIVE_TRANSACTION);
+		diag_set(ClientError, ER_READ_VIEW_ABORTED);
 		return -1;
 	}
 
