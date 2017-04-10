@@ -92,7 +92,7 @@ enum vy_log_record_type {
 	VY_LOG_PREPARE_RUN		= 4,
 	/**
 	 * Insert a run into a vinyl range.
-	 * Requires vy_log_record::range_id, run_id.
+	 * Requires vy_log_record::range_id, run_id, upper_lsn.
 	 */
 	VY_LOG_INSERT_RUN		= 5,
 	/**
@@ -159,6 +159,8 @@ struct vy_log_record {
 	 * ranges tree.
 	 */
 	bool is_level_zero;
+	/** Max LSN spanned by this run. */
+	int64_t upper_lsn;
 };
 
 /**
@@ -416,13 +418,14 @@ vy_log_prepare_run(int64_t index_lsn, int64_t run_id)
 
 /** Helper to log a vinyl run insertion. */
 static inline void
-vy_log_insert_run(int64_t range_id, int64_t run_id)
+vy_log_insert_run(int64_t range_id, int64_t run_id, int64_t upper_lsn)
 {
 	struct vy_log_record record;
 	record.type = VY_LOG_INSERT_RUN;
 	record.signature = -1;
 	record.range_id = range_id;
 	record.run_id = run_id;
+	record.upper_lsn = upper_lsn;
 	vy_log_write(&record);
 }
 

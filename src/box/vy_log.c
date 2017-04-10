@@ -72,7 +72,8 @@ enum vy_log_key {
 	VY_LOG_KEY_SPACE_ID		= 6,
 	VY_LOG_KEY_PATH			= 7,
 	VY_LOG_KEY_DEF			= 7,
-	VY_LOG_KEY_IS_LEVEL_ZERO		= 8,
+	VY_LOG_KEY_IS_LEVEL_ZERO	= 8,
+	VY_LOG_KEY_UPPER_LSN		= 9,
 };
 
 /**
@@ -94,7 +95,8 @@ static const unsigned long vy_log_key_mask[] = {
 	[VY_LOG_PREPARE_RUN]		= (1 << VY_LOG_KEY_INDEX_LSN) |
 					  (1 << VY_LOG_KEY_RUN_ID),
 	[VY_LOG_INSERT_RUN]		= (1 << VY_LOG_KEY_RANGE_ID) |
-					  (1 << VY_LOG_KEY_RUN_ID),
+					  (1 << VY_LOG_KEY_RUN_ID) |
+					  (1 << VY_LOG_KEY_UPPER_LSN),
 	[VY_LOG_DELETE_RUN]		= (1 << VY_LOG_KEY_RUN_ID),
 	[VY_LOG_FORGET_RUN]		= (1 << VY_LOG_KEY_RUN_ID),
 };
@@ -110,6 +112,7 @@ static const char *vy_log_key_name[] = {
 	[VY_LOG_KEY_SPACE_ID]		= "space_id",
 	[VY_LOG_KEY_DEF]		= "key_def",
 	[VY_LOG_KEY_IS_LEVEL_ZERO]	= "is_level_zero",
+	[VY_LOG_KEY_UPPER_LSN]		= "upper_lsn",
 };
 
 /** vy_log_type -> human readable name. */
@@ -258,6 +261,8 @@ struct vy_run_recovery_info {
 	struct rlist in_incomplete;
 	/** ID of the run. */
 	int64_t id;
+	/** Max LSN spanned by this run. */
+	int64_t upper_lsn;
 	/** True if the run was deleted. */
 	bool is_deleted;
 	/**
@@ -324,6 +329,10 @@ vy_log_record_snprint(char *buf, int size, const struct vy_log_record *record)
 		SNPRINT(total, key_def_snprint, buf, size, record->key_def);
 		SNPRINT(total, snprintf, buf, size, ", ");
 	}
+	if (key_mask & (1 << VY_LOG_KEY_UPPER_LSN))
+		SNPRINT(total, snprintf, buf, size, "%s=%lld",
+			vy_log_key_name[VY_LOG_KEY_UPPER_LSN],
+			(long long)record->upper_lsn);
 	SNPRINT(total, snprintf, buf, size, "}");
 	return total;
 }
@@ -431,6 +440,12 @@ vy_log_record_encode(const struct vy_log_record *record,
 		size += mp_sizeof_bool(record->is_level_zero);
 		n_keys++;
 	}
+	if (key_mask & (1 << VY_LOG_KEY_UPPER_LSN)) {
+		assert(record->upper_lsn >= 0);
+		size += mp_sizeof_uint(VY_LOG_KEY_UPPER_LSN);
+		size += mp_sizeof_uint(record->upper_lsn);
+		n_keys++;
+	}
 	size += mp_sizeof_map(n_keys);
 
 	/*
@@ -496,6 +511,10 @@ vy_log_record_encode(const struct vy_log_record *record,
 	if (key_mask & (1 << VY_LOG_KEY_IS_LEVEL_ZERO)) {
 		pos = mp_encode_uint(pos, VY_LOG_KEY_IS_LEVEL_ZERO);
 		pos = mp_encode_bool(pos, record->is_level_zero);
+	}
+	if (key_mask & (1 << VY_LOG_KEY_UPPER_LSN)) {
+		pos = mp_encode_uint(pos, VY_LOG_KEY_UPPER_LSN);
+		pos = mp_encode_uint(pos, record->upper_lsn);
 	}
 	assert(pos == tuple + size);
 
@@ -589,6 +608,9 @@ vy_log_record_decode(struct vy_log_record *record,
 		}
 		case VY_LOG_KEY_IS_LEVEL_ZERO:
 			record->is_level_zero = mp_decode_bool(&pos);
+			break;
+		case VY_LOG_KEY_UPPER_LSN:
+			record->upper_lsn = mp_decode_uint(&pos);
 			break;
 		default:
 			goto fail;
@@ -1192,6 +1214,7 @@ vy_recovery_create_run(struct vy_recovery *recovery, int64_t run_id)
 	}
 	assert(old_node == NULL);
 	run->id = run_id;
+	run->upper_lsn = -1;
 	run->is_deleted = false;
 	run->signature = -1;
 	rlist_create(&run->in_range);
@@ -1240,7 +1263,7 @@ vy_recovery_prepare_run(struct vy_recovery *recovery, int64_t signature,
  */
 static int
 vy_recovery_insert_run(struct vy_recovery *recovery, int64_t signature,
-		       int64_t range_id, int64_t run_id)
+		       int64_t range_id, int64_t run_id, int64_t upper_lsn)
 {
 	struct vy_range_recovery_info *range;
 	range = vy_recovery_lookup_range(recovery, range_id);
@@ -1264,6 +1287,7 @@ vy_recovery_insert_run(struct vy_recovery *recovery, int64_t signature,
 			return -1;
 	}
 	run->signature = signature;
+	run->upper_lsn = upper_lsn;
 	rlist_del_entry(run, in_incomplete);
 	rlist_move_entry(&range->runs, run, in_range);
 	return 0;
@@ -1450,7 +1474,8 @@ vy_recovery_process_record(struct vy_recovery *recovery,
 		break;
 	case VY_LOG_INSERT_RUN:
 		rc = vy_recovery_insert_run(recovery, record->signature,
-				record->range_id, record->run_id);
+					    record->range_id, record->run_id,
+					    record->upper_lsn);
 		break;
 	case VY_LOG_DELETE_RUN:
 		rc = vy_recovery_delete_run(recovery, record->signature,
@@ -1654,6 +1679,7 @@ vy_recovery_do_iterate_index(struct vy_index_recovery_info *index,
 			record.signature = run->signature;
 			record.range_id = range->id;
 			record.run_id = run->id;
+			record.upper_lsn = run->upper_lsn;
 			if (vy_recovery_cb_call(cb, cb_arg, &record) != 0)
 				return -1;
 			if (run->is_deleted) {
