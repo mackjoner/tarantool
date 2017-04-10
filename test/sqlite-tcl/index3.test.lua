@@ -69,7 +69,7 @@ do_execsql_test index3-2.2 {
 do_execsql_test index3-2.2eqp {
   EXPLAIN QUERY PLAN
   SELECT a FROM t1 WHERE b='ab005xy' COLLATE nocase;
-} {/USING INDEX/}
+} {/USING COVERING INDEX/}
 
 
 # # This test corrupts the database file so it must be the last test

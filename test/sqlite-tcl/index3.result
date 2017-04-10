@@ -1,8 +1,5 @@
 index3-1.1... Ok
 index3-2.1... Ok
 index3-2.2... Ok
-index3-2.2eqp...
-Expected: [/USING INDEX/]
-     Got: [0 0 0 {SCAN TABLE t1}]
-1 errors out of 5 tests
-Failures on these tests: index3-2.2eqp
+index3-2.2eqp... Ok
+0 errors out of 5 tests
