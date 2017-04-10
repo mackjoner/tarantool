@@ -411,3 +411,4 @@ test_run:cmd("setopt delimiter ''");
 ---
 - true
 ...
+test_run:cmd("restart server default")
