@@ -33,21 +33,21 @@ do_test index-1.1.1 {
 #            WHERE name='index1'}
 # } {index1 {CREATE INDEX index1 ON test1(f1)} test1 index}
 
-do_test index-1.1c {
-  db close
-  sqlite3 db test.db
-  execsql {SELECT name FROM _index WHERE name='index1'}
-} {index1}
+#do_test index-1.1c {
+#  db close
+#  sqlite3 db test.db
+#  execsql {SELECT name FROM _index WHERE name='index1'}
+#} {index1}
   # execsql {SELECT name, sql, tbl_name, type FROM sqlite_master 
   #          WHERE name='index1'}
 #} {index1 {CREATE INDEX index1 ON test1(f1)} test1 index}
 
-do_test index-1.1d {
-  db close
-  sqlite3 db test.db
-  execsql {SELECT name FROM _space WHERE name='test1'}
+#do_test index-1.1d {
+#  db close
+#  sqlite3 db test.db
+#  execsql {SELECT name FROM _space WHERE name='test1'}
   #execsql {SELECT name FROM sqlite_master WHERE type!='meta' ORDER BY name}
-} {test1}
+#} {test1}
 
 # Verify that the index dies with the table
 #
@@ -249,8 +249,8 @@ do_test index-7.2 {
   execsql {SELECT f1 FROM test1 WHERE f2=65536}
 } {16}
 do_test index-7.3 {
-  execsql {SELECT name FROM _index WHERE id=517}
-} {a_ind_test1_1}
+  execsql {SELECT name FROM _index WHERE name='sqlite_autoindex_test1_1'}
+} {sqlite_autoindex_test1_1}
 do_test index-7.4 {
   execsql {DROP table test1}
   execsql {SELECT name FROM _space WHERE name='test1'}
@@ -360,6 +360,8 @@ do_test index-10.8 {
 
 # Automatically create an index when we specify a primary key.
 #
+# Tarantool: WITHOUT ROWID is by default, so search count is less
+# by one. Expected result changed {0.1 2} -> {0.1 1}
 do_test index-11.1 {
   execsql {
     CREATE TABLE t3(
@@ -374,7 +376,7 @@ do_test index-11.1 {
   }
   set sqlite_search_count 0
   concat [execsql {SELECT c FROM t3 WHERE b==10}] $sqlite_search_count
-} {0.1 2}
+} {0.1 1}
 
 # integrity_check index-11.2
 
@@ -623,7 +625,7 @@ do_test index-17.1 {
     CREATE TABLE t7(c, d UNIQUE, UNIQUE(c), PRIMARY KEY(c, d) );
     SELECT _index.name FROM _index JOIN _space WHERE _index.id = _space.id AND _space.name='t7';
   }
-} {a_ind_t7_3 a_ind_t7_2 a_ind_t7_1}
+} {sqlite_autoindex_t7_3 sqlite_autoindex_t7_2 sqlite_autoindex_t7_1}
 # do_test index-17.2 {
 #   catchsql {
 #     DROP INDEX sqlite_autoindex_t7_1;

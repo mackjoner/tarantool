@@ -1,7 +1,5 @@
 index-1.1... Ok
 index-1.1.1... Ok
-index-1.1c... Ok
-index-1.1d... Ok
 index-1.2... Ok
 index-2.1... Ok
 index-2.1b... Ok
@@ -77,4 +75,4 @@ index-18.5... Ok
 index-20.1... Ok
 index-20.2... Ok
 index-21.1... Ok
-0 errors out of 80 tests
+0 errors out of 78 tests
