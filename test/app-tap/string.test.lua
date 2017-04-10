@@ -2,11 +2,14 @@
 
 local tap = require('tap')
 local test = tap.test("string extensions")
-test:plan(2)
+
+test:plan(3)
 
 -- gh-2211 - string.split() Lua API
 test:test("split/gsplit tests", function(test)
     test:plan(16)
+
+    -- testing basic split (works over gsplit)
     test:is_deeply((""):split(""), {""},   "empty split")
     test:is_deeply((""):split("z"), {""},  "empty split")
     test:is_deeply(("a"):split(""), {"a"}, "empty split")
@@ -55,6 +58,7 @@ end)
 -- gh-2214 - string.ljust()/string.rjust() Lua API
 test:test("ljust/rjust/center", function(test)
     test:plan(15)
+
     test:is(("help"):ljust(0),  "help", "ljust, length 0, do nothing")
     test:is(("help"):rjust(0),  "help", "rjust, length 0, do nothing")
     test:is(("help"):center(0), "help", "center, length 0, do nothing")
@@ -74,6 +78,34 @@ test:test("ljust/rjust/center", function(test)
     test:is(("help"):ljust(6, '.'),  "help..", "ljust, length 6, two extra charachters, custom fill char")
     test:is(("help"):rjust(6, '.'),  "..help", "rjust, length 6, two extra charachters, custom fill char")
     test:is(("help"):center(6, '.'), ".help.", "center, length 6, two extra charachters, custom fill char")
+end)
+
+-- gh-2215 - string.startswith()/string.endswith() Lua API
+test:test("startswith/endswith", function(test)
+    test:plan(20)
+
+    test:ok((""):startswith(""),      "empty+empty startswith")
+    test:ok((""):endswith(""),        "empty+empty endswith")
+    test:ok(not (""):startswith("a"), "empty+non-empty startswith")
+    test:ok(not (""):endswith("a"),   "empty+non-empty endswith")
+    test:ok(("a"):startswith(""),     "non-empty+empty startswith")
+    test:ok(("a"):endswith(""),       "non-empty+empty endswith")
+
+    test:ok(("12345"):startswith("123")            , "simple startswith")
+    test:ok(("12345"):startswith("123", 1, 5)      , "startswith with good begin/end")
+    test:ok(("12345"):startswith("123", 1, 3)      , "startswith with good begin/end")
+    test:ok(("12345"):startswith("123", -5, 3)     , "startswith with good negative begin/end")
+    test:ok(("12345"):startswith("123", -5, -3)    , "startswith with good negative begin/end")
+    test:ok(not ("12345"):startswith("123", 2, 5)  , "bad startswith with good begin/end")
+    test:ok(not ("12345"):startswith("123", 1, 2)  , "bad startswith with good begin/end")
+
+    test:ok(("12345"):endswith("345")              , "simple endswith")
+    test:ok(("12345"):endswith("345", 1, 5)        , "endswith with good begin/end")
+    test:ok(("12345"):endswith("345", 3, 5)        , "endswith with good begin/end")
+    test:ok(("12345"):endswith("345", -3, 5)       , "endswith with good begin/end")
+    test:ok(("12345"):endswith("345", -3, -1)      , "endswith with good begin/end")
+    test:ok(not ("12345"):endswith("345", 1, 4)    , "bad endswith with good begin/end")
+    test:ok(not ("12345"):endswith("345", 4, 5)    , "bad endswith with good begin/end")
 end)
 
 os.exit(test:check() == true and 0 or -1)

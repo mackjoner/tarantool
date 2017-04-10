@@ -142,7 +142,7 @@ end
 --- Center string in a field of given width.
 -- Prepend and append "(width - len(inp))/2" chars to given string.
 -- Input is never trucated.
--- @function rjust
+-- @function center
 -- @string       inp    the string
 -- @int          width  at least bytes to be returned
 -- @string[opt]  char   char of length 1 to fill with (" " by default)
@@ -152,7 +152,7 @@ local function string_center(inp, width, char)
         error("string.center argument #1 should be a string", 2)
     end
     if type(width) ~= 'number' or width < 0 then
-        error("string.center argument #2 should be a natural number", 2)
+        error("string.center argument #2 should be a positive integer", 2)
     end
     if char ~= nil and (type(char) ~= 'string' or #char ~= 1) then
         error("string.center argument #3 should be a char (length 1) or nil", 2)
@@ -167,9 +167,102 @@ local function string_center(inp, width, char)
     return char:rep(pad_left) .. inp .. char:rep(pad_right)
 end
 
+-- For now the best way to check, that string starts with sequence
+-- (with patterns disabled) is to cut line and check strings for equality
+
+--- Check that string (or substring) starts with given string
+-- Optionally restricting the matching with the given offsets
+-- @function startswith
+-- @string    inp     original string
+-- @string    head    the substring to check against
+-- @int[opt]  _start  start index of matching boundary
+-- @int[opt]  _end    end index of matching boundary
+-- @returns           boolean
+local function string_startswith(inp, head, _start, _end)
+    local head_len, inp_len = #head, #inp
+    if type(inp) ~= 'string' then
+        error("string.startswith argument #1 should be a string", 2)
+    end
+    if type(head) ~= 'string' then
+        error("string.startswith argument #2 should be a string", 2)
+    end
+    if _start ~= nil and type(_start) ~= 'number' then
+        error("string.startswith argument #3 should be an integer", 2)
+    end
+    if _end ~= nil and type(_end) ~= 'number' then
+        error("string.startswith argument #4 should be an integer", 2)
+    end
+    -- prepare input arguments (move negative values [offset from the end] to
+    -- positive ones and/or assign default values)
+    if _start == nil then
+        _start = 1
+    elseif _start < 0 then
+        _start = inp_len + _start + 1
+        if _start < 0 then _start = 0 end
+    end
+    if _end == nil or _end > inp_len then
+        _end = inp_len
+    elseif _end < 0 then
+        _end = inp_len + _end + 1
+        if _end < 0 then _end = 0 end
+    end
+    -- check for degenerate case (interval lesser than input)
+    if _end - _start + 1 < head_len then
+        return false
+    end
+    _end = _start + head_len - 1
+    return (inp:sub(_start, _end) == head)
+end
+
+--- Check that string (or substring) ends with given string
+-- Optionally restricting the matching with the given offsets
+-- @function endswith
+-- @string    inp     original string
+-- @string    tail    the substring to check against
+-- @int[opt]  _start  start index of matching boundary
+-- @int[opt]  _end    end index of matching boundary
+-- @returns           boolean
+local function string_endswith(inp, tail, _start, _end)
+    local tail_len, inp_len = #tail, #inp
+    if type(inp) ~= 'string' then
+        error("string.endswith argument #1 should be a string", 2)
+    end
+    if type(tail) ~= 'string' then
+        error("string.endswith argument #2 should be a string", 2)
+    end
+    if _start ~= nil and type(_start) ~= 'number' then
+        error("string.endswith argument #3 should be an integer", 2)
+    end
+    if _end ~= nil and type(_end) ~= 'number' then
+        error("string.endswith argument #4 should be an integer", 2)
+    end
+    -- prepare input arguments (move negative values [offset from the end] to
+    -- positive ones and/or assign default values)
+    if _start == nil then
+        _start = 1
+    elseif _start < 0 then
+        _start = inp_len + _start + 1
+        if _start < 0 then _start = 0 end
+    end
+    if _end == nil or _end > inp_len then
+        _end = inp_len
+    elseif _end < 0 then
+        _end = inp_len + _end + 1
+        if _end < 0 then _end = 0 end
+    end
+    -- check for degenerate case (interval lesser than input)
+    if _end - _start + 1 < tail_len then
+        return false
+    end
+    _start = _end - tail_len + 1
+    return (inp:sub(_start, _end) == tail)
+end
+
 -- It'll automatically set string methods, too.
-string.gsplit = string_gsplit
-string.split  = string_split
-string.ljust  = string_ljust
-string.rjust  = string_rjust
-string.center = string_center
+string.gsplit     = string_gsplit
+string.split      = string_split
+string.ljust      = string_ljust
+string.rjust      = string_rjust
+string.center     = string_center
+string.startswith = string_startswith
+string.endswith   = string_endswith
