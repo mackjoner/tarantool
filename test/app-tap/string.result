@@ -1,18 +1,41 @@
 TAP version 13
-1..16
-ok - empty split
-ok - empty split
-ok - empty split
-ok - split self
-ok - complex split on empty separator
-ok - complex split on space separator
-ok - complex split on non-empty regexp separator
-ok - another * separator
-ok - testing max separator
-ok - testing splitting on one char
-ok - checking position 1 using for
-ok - checking position 2 using for
-ok - checking position 3 using for
-ok - checking position 1 using fun
-ok - checking position 2 using fun
-ok - checking position 3 using fun
+1..2
+    # split/gsplit tests
+    1..16
+    ok - empty split
+    ok - empty split
+    ok - empty split
+    ok - split self
+    ok - complex split on empty separator
+    ok - complex split on space separator
+    ok - complex split on non-empty regexp separator
+    ok - another * separator
+    ok - testing max separator
+    ok - testing splitting on one char
+    ok - checking position 1 using for
+    ok - checking position 2 using for
+    ok - checking position 3 using for
+    ok - checking position 1 using fun
+    ok - checking position 2 using fun
+    ok - checking position 3 using fun
+    # split/gsplit tests: end
+ok - split/gsplit tests
+    # ljust/rjust/center
+    1..15
+    ok - ljust, length 0, do nothing
+    ok - rjust, length 0, do nothing
+    ok - center, length 0, do nothing
+    ok - ljust, length 3, do nothing
+    ok - rjust, length 3, do nothing
+    ok - center, length 3, do nothing
+    ok - ljust, length 5, one extra charachter
+    ok - rjust, length 5, one extra charachter
+    ok - center, length 5, one extra charachter
+    ok - ljust, length 6, two extra charachters
+    ok - rjust, length 6, two extra charachters
+    ok - center, length 6, two extra charachters
+    ok - ljust, length 6, two extra charachters, custom fill char
+    ok - rjust, length 6, two extra charachters, custom fill char
+    ok - center, length 6, two extra charachters, custom fill char
+    # ljust/rjust/center: end
+ok - ljust/rjust/center
