@@ -1,0 +1,18 @@
+TAP version 13
+1..16
+ok - empty split
+ok - empty split
+ok - empty split
+ok - split self
+ok - complex split on empty separator
+ok - complex split on space separator
+ok - complex split on non-empty regexp separator
+ok - another * separator
+ok - testing max separator
+ok - testing splitting on one char
+ok - checking position 1 using for
+ok - checking position 2 using for
+ok - checking position 3 using for
+ok - checking position 1 using fun
+ok - checking position 2 using fun
+ok - checking position 3 using fun
