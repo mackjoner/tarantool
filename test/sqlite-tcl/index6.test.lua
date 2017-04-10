@@ -317,7 +317,7 @@ do_eqp_test index6-8.1 {
   SELECT * FROM t8a LEFT JOIN t8b ON (x = 'value' AND y = a)
 } {
   0 0 0 {SCAN TABLE t8a} 
-  0 1 1 {SEARCH TABLE t8b USING COVERING INDEX i8c (y=?)}
+  0 1 1 {SEARCH TABLE t8b USING INDEX i8c (y=?)}
 }
 
 do_execsql_test index6-8.2 {
@@ -363,14 +363,14 @@ do_execsql_test index6-10.1 {
 do_execsql_test index6-10.1eqp {
   EXPLAIN QUERY PLAN
   SELECT e FROM t10 WHERE a=1 AND b=2 AND c=3 ORDER BY d;
-} {/USING COVERING INDEX t10x/}
+} {/USING INDEX t10x/}
 do_execsql_test index6-10.2 {
   SELECT e FROM t10 WHERE c=3 AND 2=b AND a=1 ORDER BY d DESC;
 } {9 5}
 do_execsql_test index6-10.2eqp {
   EXPLAIN QUERY PLAN
   SELECT e FROM t10 WHERE c=3 AND 2=b AND a=1 ORDER BY d DESC;
-} {/USING COVERING INDEX t10x/}
+} {/USING INDEX t10x/}
 do_execsql_test index6-10.3 {
   SELECT e FROM t10 WHERE a=1 AND b=2 ORDER BY d DESC;
 } {9 5}
