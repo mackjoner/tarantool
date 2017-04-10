@@ -1228,12 +1228,6 @@ vy_run_size(struct vy_run *run)
 	return run->info.size;
 }
 
-static bool
-vy_run_is_empty(struct vy_run *run)
-{
-	return run->info.count == 0;
-}
-
 static struct vy_run *
 vy_run_new(int64_t id)
 {
@@ -2168,7 +2162,6 @@ vy_run_write_data(struct vy_run *run, const char *dirpath,
 		  const struct index_def *user_index_def, const char **max_key)
 {
 	assert(curr_stmt != NULL);
-	assert(*curr_stmt != NULL);
 
 	struct vy_run_info *run_info = &run->info;
 
@@ -2192,6 +2185,8 @@ vy_run_write_data(struct vy_run *run, const char *dirpath,
 	uint32_t page_infos_capacity = 0;
 	int rc;
 	do {
+		if (*curr_stmt == NULL)
+			break;
 		rc = vy_run_write_page(run_info, &data_xlog, wi,
 				       end_key, &page_infos_capacity, bs,
 				       curr_stmt, index_def, user_index_def,
@@ -2442,16 +2437,20 @@ static int
 vy_run_info_encode(const struct vy_run_info *run_info,
 		   struct xrow_header *xrow)
 {
-	assert(run_info->has_bloom);
-	size_t size = mp_sizeof_map(4);
+	int n_keys = 3;
+	size_t size = 0;
 	size += mp_sizeof_uint(VY_RUN_INFO_MIN_LSN) +
 		mp_sizeof_uint(run_info->min_lsn);
 	size += mp_sizeof_uint(VY_RUN_INFO_MAX_LSN) +
 		mp_sizeof_uint(run_info->max_lsn);
 	size += mp_sizeof_uint(VY_RUN_INFO_PAGE_COUNT) +
 		mp_sizeof_uint(run_info->count);
-	size += mp_sizeof_uint(VY_RUN_INFO_BLOOM) +
-		vy_run_bloom_encode_size(&run_info->bloom);
+	if (run_info->has_bloom) {
+		size += mp_sizeof_uint(VY_RUN_INFO_BLOOM) +
+			vy_run_bloom_encode_size(&run_info->bloom);
+		n_keys++;
+	}
+	size += mp_sizeof_map(n_keys);
 
 	char *pos = region_alloc(&fiber()->gc, size);
 	if (pos == NULL) {
@@ -2461,15 +2460,17 @@ vy_run_info_encode(const struct vy_run_info *run_info,
 	memset(xrow, 0, sizeof(*xrow));
 	xrow->body->iov_base = pos;
 	/* encode values */
-	pos = mp_encode_map(pos, 4);
+	pos = mp_encode_map(pos, n_keys);
 	pos = mp_encode_uint(pos, VY_RUN_INFO_MIN_LSN);
 	pos = mp_encode_uint(pos, run_info->min_lsn);
 	pos = mp_encode_uint(pos, VY_RUN_INFO_MAX_LSN);
 	pos = mp_encode_uint(pos, run_info->max_lsn);
 	pos = mp_encode_uint(pos, VY_RUN_INFO_PAGE_COUNT);
 	pos = mp_encode_uint(pos, run_info->count);
-	pos = mp_encode_uint(pos, VY_RUN_INFO_BLOOM);
-	pos = vy_run_bloom_encode(pos, &run_info->bloom);
+	if (run_info->has_bloom) {
+		pos = mp_encode_uint(pos, VY_RUN_INFO_BLOOM);
+		pos = vy_run_bloom_encode(pos, &run_info->bloom);
+	}
 	xrow->body->iov_len = (void *)pos - xrow->body->iov_base;
 	xrow->bodycnt = 1;
 	xrow->type = VY_INDEX_RUN_INFO;
@@ -2947,10 +2948,6 @@ vy_range_write_run(struct vy_range *range, struct vy_write_iterator *wi,
 {
 	assert(stmt != NULL);
 
-	/* Do not create empty run files. */
-	if (*stmt == NULL)
-		return 0;
-
 	const struct vy_index *index = range->index;
 	const struct index_def *index_def = index->index_def;
 	const struct index_def *user_index_def = index->user_index_def;
@@ -2963,20 +2960,25 @@ vy_range_write_run(struct vy_range *range, struct vy_write_iterator *wi,
 			       "vinyl range dump"); return -1;});
 
 	struct bloom_spectrum bs;
-	bloom_spectrum_create(&bs, max_output_count, bloom_fpr, runtime.quota);
+	if (max_output_count > 0)
+		bloom_spectrum_create(&bs, max_output_count,
+				      bloom_fpr, runtime.quota);
 
 	if (vy_run_write_data(run, index->path, wi, stmt, range->end, &bs,
 			      index_def, user_index_def, max_key) != 0)
 		return -1;
 
-	bloom_spectrum_choose(&bs, &run->info.bloom);
-	run->info.has_bloom = true;
-	bloom_spectrum_destroy(&bs, runtime.quota);
+	if (run->info.keys > 0) {
+		assert(max_output_count > 0);
+		bloom_spectrum_choose(&bs, &run->info.bloom);
+		run->info.has_bloom = true;
+	}
+	if (max_output_count > 0)
+		bloom_spectrum_destroy(&bs, runtime.quota);
 
 	if (vy_run_write_index(run, index->path) != 0)
 		return -1;
 
-	assert(!vy_run_is_empty(run));
 	*written += vy_run_size(run);
 	*dumped_statements += run->info.keys;
 	return 0;
@@ -3058,7 +3060,6 @@ vy_range_update_compact_priority(struct vy_range *range)
 
 	assert(opts->run_count_per_level > 0);
 	assert(opts->run_size_ratio > 1);
-	assert(range->max_dump_size > 0);
 
 	range->compact_priority = 0;
 
@@ -3107,6 +3108,8 @@ vy_range_update_compact_priority(struct vy_range *range)
 			 * Calculate the target run size for this
 			 * level.
 			 */
+			if (target_run_size == 0)
+				target_run_size = run_size;
 			target_run_size *= opts->run_size_ratio;
 			/*
 			 * Keep pushing the run down until
@@ -3872,13 +3875,10 @@ vy_task_dump_complete(struct vy_task *task)
 	/*
 	 * Log change in metadata.
 	 */
-	if (!vy_run_is_empty(range->new_run)) {
-		vy_log_tx_begin();
-		vy_log_insert_run(range->id, range->new_run->id);
-		if (vy_log_tx_commit() < 0)
-			return -1;
-	} else
-		vy_range_discard_new_run(range);
+	vy_log_tx_begin();
+	vy_log_insert_run(range->id, range->new_run->id);
+	if (vy_log_tx_commit() < 0)
+		return -1;
 
 	say_info("%s: completed dumping range %s",
 		 index->name, vy_range_str(range));
@@ -3888,14 +3888,11 @@ vy_task_dump_complete(struct vy_task *task)
 
 	vy_index_unacct_range(index, range);
 	vy_range_dump_mems(range, scheduler, task->dump_lsn);
-	if (range->new_run != NULL) {
-		range->max_dump_size = MAX(range->max_dump_size,
-					   vy_run_size(range->new_run));
-		vy_range_add_run(range, range->new_run);
-		vy_range_update_compact_priority(range);
-		range->new_run = NULL;
-		assert(! range->is_level_zero || task->max_written_key != NULL);
-	}
+	range->max_dump_size = MAX(range->max_dump_size,
+				   vy_run_size(range->new_run));
+	vy_range_add_run(range, range->new_run);
+	vy_range_update_compact_priority(range);
+	range->new_run = NULL;
 	range->version++;
 	vy_index_acct_range(index, range);
 	vy_scheduler_add_range(scheduler, range);
@@ -4047,16 +4044,10 @@ vy_task_split_complete(struct vy_task *task)
 	rlist_foreach_entry(r, &range->split_list, split_list) {
 		vy_log_insert_range(index->index_def->opts.lsn, r->id,
 				    r->begin, r->end, r->is_level_zero);
-		if (!vy_run_is_empty(r->new_run))
-			vy_log_insert_run(r->id, r->new_run->id);
+		vy_log_insert_run(r->id, r->new_run->id);
 	}
 	if (vy_log_tx_commit() < 0)
 		return -1;
-
-	rlist_foreach_entry(r, &range->split_list, split_list) {
-		if (vy_run_is_empty(r->new_run))
-			vy_range_discard_new_run(r);
-	}
 
 	say_info("%s: completed splitting range %s",
 		 index->name, vy_range_str(range));
@@ -4072,14 +4063,8 @@ vy_task_split_complete(struct vy_task *task)
 	 */
 	vy_index_unacct_range(index, range);
 	rlist_foreach_entry_safe(r, &range->split_list, split_list, tmp) {
-		/*
-		 * Add the new run created by split to the list
-		 * unless it's empty.
-		 */
-		if (r->new_run != NULL) {
-			vy_range_add_run(r, r->new_run);
-			r->new_run = NULL;
-		}
+		vy_range_add_run(r, r->new_run);
+		r->new_run = NULL;
 
 		rlist_del(&r->split_list);
 		assert(r->shadow == range);
@@ -4291,13 +4276,9 @@ vy_task_compact_complete(struct vy_task *task)
 			break;
 	}
 	assert(n == 0);
-	if (!vy_run_is_empty(range->new_run))
-		vy_log_insert_run(range->id, range->new_run->id);
+	vy_log_insert_run(range->id, range->new_run->id);
 	if (vy_log_tx_commit() < 0)
 		return -1;
-
-	if (vy_run_is_empty(range->new_run))
-		vy_range_discard_new_run(range);
 
 	say_info("%s: completed compacting range %s",
 		 index->name, vy_range_str(range));
@@ -4318,10 +4299,8 @@ vy_task_compact_complete(struct vy_task *task)
 			break;
 	}
 	assert(n == 0);
-	if (range->new_run != NULL) {
-		vy_range_add_run(range, range->new_run);
-		range->new_run = NULL;
-	}
+	vy_range_add_run(range, range->new_run);
+	range->new_run = NULL;
 	range->n_compactions++;
 	range->version++;
 	vy_index_acct_range(index, range);
