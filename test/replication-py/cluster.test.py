@@ -260,7 +260,6 @@ except Exception as e:
     line = "ER_READONLY"
     if failed.logfile_pos.seek_once(line) >= 0:
         print "'%s' exists in server log" % line
-
 master.admin('box.cfg { read_only = false }')
 
 
@@ -270,5 +269,7 @@ print '-------------------------------------------------------------'
 
 # Cleanup
 sys.stdout.pop_filter()
-
 master.admin("box.schema.user.revoke('guest', 'replication')")
+server.stop()
+server.cleanup(True)
+server.deploy()

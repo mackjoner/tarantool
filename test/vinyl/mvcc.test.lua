@@ -1552,3 +1552,4 @@ c4 = nil
 c5 = nil
 c6 = nil
 c7 = nil
+test_run:cmd("restart server default")

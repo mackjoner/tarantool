@@ -59,9 +59,10 @@ c.space.test:get(1) == nil
 errinj.set("ERRINJ_RELAY", false)
 
 -- cleanup
+test_run:cmd("switch replica")
+test_run:cmd("stop server default")
+test_run:cmd("deploy server default")
+test_run:cmd("start server default")
+test_run:cmd("switch default")
 test_run:cmd("stop server replica")
 test_run:cmd("cleanup server replica")
-box.space.test:drop()
-box.schema.user.revoke('guest', 'replication')
-box.schema.user.revoke('guest', 'read,write,execute', 'universe')
-

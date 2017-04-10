@@ -35,4 +35,5 @@ test_res
 too_longs
 s:drop()
 test_itr = nil test_run_itr = nil test_itrs = nil s = nil
+test_run:cmd("restart server default")
 'done'

@@ -1,8 +1,6 @@
 env = require('test_run')
 test_run = env.new()
-test_run:cmd('restart server default')
 test_run:cmd("push filter 'error: Failed to allocate [0-9]+ ' to 'error: Failed to allocate <NUM> '")
-
 space = box.schema.space.create('tweedledum')
 index = space:create_index('primary', { type = 'hash' })
 test_run:cmd("setopt delimiter ';'")
@@ -80,7 +78,6 @@ space:drop()
 t = nil
 
 -- https://github.com/tarantool/tarantool/issues/962 index:delete() failed
-test_run:cmd('restart server default')
 arena_bytes = box.cfg.memtx_memory
 str = string.rep('a', 15000) -- about size of index memory block
 

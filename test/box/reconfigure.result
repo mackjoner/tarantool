@@ -107,3 +107,10 @@ box.cfg{io_collect_interval=0}
 box.cfg{too_long_threshold=0.5}
 ---
 ...
+env = require('test_run')
+---
+...
+test_run = env.new()
+---
+...
+test_run:cmd("restart server default")

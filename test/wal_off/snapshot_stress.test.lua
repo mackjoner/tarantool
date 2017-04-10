@@ -262,4 +262,4 @@ log.info('Part II: checking snapshot done');
 
 test_run:cmd("setopt delimiter ''");
 
-
+test_run:cmd("restart server default")
