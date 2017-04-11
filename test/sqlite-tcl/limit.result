@@ -19,11 +19,8 @@ limit-4.1... Ok
 limit-4.2... Ok
 limit-5.1... Ok
 limit-5.2... Ok
-limit-5.3...
-Error: unknown error
-limit-5.4...
-Expected: [21 41 21 39]
-     Got: [21 41]
+limit-5.3... Ok
+limit-5.4... Ok
 limit-5.5... Ok
 limit-6.1... Ok
 limit-6.2... Ok
@@ -104,5 +101,4 @@ limit-14.3... Ok
 limit-14.4... Ok
 limit-14.6... Ok
 limit-14.7... Ok
-2 errors out of 104 tests
-Failures on these tests: limit-5.3 limit-5.4
+0 errors out of 104 tests

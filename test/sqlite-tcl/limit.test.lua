@@ -166,18 +166,18 @@ do_test limit-4.2 {
 
 do_test limit-5.1 {
   execsql {
-    CREATE TABLE t5(x primary key,y);
-    INSERT INTO t5 SELECT x-y, x+y FROM t1 WHERE x BETWEEN 10 AND 15
+    CREATE TABLE t5(id primary key, x, y);
+    INSERT INTO t5 SELECT id, x-y, x+y FROM t1 WHERE x BETWEEN 10 AND 15
         ORDER BY x LIMIT 2;
-    SELECT * FROM t5 ORDER BY x;
+    SELECT x, y FROM t5 ORDER BY x;
   }
 } {5 15 6 16}
 do_test limit-5.2 {
   execsql {
     DELETE FROM t5;
-    INSERT INTO t5 SELECT x-y, x+y FROM t1 WHERE x BETWEEN 10 AND 15
+    INSERT INTO t5 SELECT id, x-y, x+y FROM t1 WHERE x BETWEEN 10 AND 15
         ORDER BY x DESC LIMIT 2;
-    SELECT * FROM t5 ORDER BY x;
+    SELECT x, y FROM t5 ORDER BY x;
   }
 } {9 19 10 20}
 
@@ -186,8 +186,8 @@ do_test limit-5.2 {
 do_test limit-5.3 {
   execsql {
     DELETE FROM t5;
-    INSERT INTO t5 SELECT x-y, x+y FROM t1 WHERE x ORDER BY x DESC LIMIT 31;
-    SELECT * FROM t5 ORDER BY x LIMIT 2;
+    INSERT INTO t5 SELECT id, x-y, x+y FROM t1 WHERE x ORDER BY x DESC LIMIT 31;
+    SELECT x, y FROM t5 ORDER BY x LIMIT 2;
   }
 } {-4 6 -3 7}
 
@@ -195,14 +195,14 @@ do_test limit-5.3 {
 
 do_test limit-5.4 {
   execsql {
-    SELECT * FROM t5 ORDER BY x DESC, y DESC LIMIT 2;
+    SELECT x, y FROM t5 ORDER BY x DESC, y DESC LIMIT 2;
   }
 } {21 41 21 39}
 do_test limit-5.5 {
   execsql {
     DELETE FROM t5;
-    INSERT INTO t5 SELECT a.x*100+b.x, a.y*100+b.y FROM t1 AS a, t1 AS b
-                   ORDER BY 1, 2 LIMIT 1000;
+    INSERT INTO t5 SELECT a.id + 1000 * b.id, a.x*100+b.x, a.y*100+b.y FROM t1 AS a, t1 AS b
+                   ORDER BY 2, 3 LIMIT 1000;
     SELECT count(*), sum(x), sum(y), min(x), max(x), min(y), max(y) FROM t5;
   }
 } {1000 1528204 593161 0 3107 505 1005}
