@@ -64,7 +64,7 @@ do_test tkt1537-1.7 {
   execsql {
     SELECT * FROM t2 LEFT JOIN t1 ON a1=b OR a2=b;
   }
-} {3 1 2 1 3 4 {} {} {} {}}
+} {4 {} {} {} {} 3 1 2 1 3}
 
 ifcapable subquery {
   do_test tkt1537-1.8 {
@@ -76,7 +76,7 @@ ifcapable subquery {
     execsql {
       SELECT * FROM t2 LEFT JOIN t1 ON b IN (a2,a1);
     }
-  } {3 1 2 1 3 4 {} {} {} {}}
+  } {4 {} {} {} {} 3 1 2 1 3}
 }
 
 execsql {
@@ -100,14 +100,14 @@ do_test tkt1537-2.3 {
   execsql {
     SELECT * FROM t2 LEFT JOIN t1 ON b BETWEEN a1 AND a2;
   }
-} {3 1 2 1 3 4 {} {} {} {}}
+} {4 {} {} {} {} 3 1 2 1 3}
 do_test tkt1537-2.4 {
   execsql {
     CREATE INDEX t1a1 ON t1(a1);
     CREATE INDEX t1a2 ON t1(a2);
     SELECT * FROM t2 LEFT JOIN t1 ON b BETWEEN a1 AND a2;
   }
-} {3 1 2 1 3 4 {} {} {} {}}
+} {4 {} {} {} {} 3 1 2 1 3}
 
 do_test tkt1537-3.1 {
   execsql {
