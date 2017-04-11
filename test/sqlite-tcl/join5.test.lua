@@ -68,7 +68,7 @@ do_test join5-2.1 {
     INSERT INTO "ab" VALUES(1,2);
     INSERT INTO "ab" VALUES(3,NULL);
 
-    CREATE TABLE xy(x primary key,y);
+    CREATE TABLE xy(x,y primary key);
     INSERT INTO "xy" VALUES(2,3);
     INSERT INTO "xy" VALUES(NULL,1);
   }
