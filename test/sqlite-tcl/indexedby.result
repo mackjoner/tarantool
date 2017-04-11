@@ -14,22 +14,16 @@ indexedby-3.3... Ok
 indexedby-3.6... Ok
 indexedby-3.7... Ok
 indexedby-4.1... Ok
-indexedby-4.2...
-Expected: [0 0 1 {SCAN TABLE t2} 0 1 0 {SEARCH TABLE t1 USING COVERING INDEX 517_1_i1 (a=?)}]
-     Got: [0 0 0 {SCAN TABLE t1 USING COVERING INDEX 517_1_i1} 0 1 1 {SEARCH TABLE t2 USING COVERING INDEX 522_1_i3 (c=?)}]
+indexedby-4.2... Ok
 indexedby-5.1... Ok
 indexedby-5.2... Ok
 indexedby-5.3... Ok
 indexedby-5.4...
 Expected: [1 {no query solution}]
-     Got: [1 {no such index: 517_1_i1}]
-indexedby-5.5...
-Expected: [0 {}]
-     Got: [1 {no such index: 517_1_i1}]
+     Got: [0 {}]
+indexedby-5.5... Ok
 indexedby-7.1... Ok
-indexedby-7.2...
-Expected: [0 0 0 {SCAN TABLE t1}]
-     Got: [0 0 0 {SEARCH TABLE t1 USING COVERING INDEX 517_3_i1 (a=?)}]
+indexedby-7.2... Ok
 indexedby-7.3... Ok
 indexedby-7.4... Ok
 indexedby-7.5... Ok
@@ -37,5 +31,5 @@ indexedby-9.1... Ok
 indexedby-10.1... Ok
 indexedby-10.2... Ok
 indexedby-10.3... Ok
-4 errors out of 32 tests
-Failures on these tests: indexedby-4.2 indexedby-5.4 indexedby-5.5 indexedby-7.2
+1 errors out of 32 tests
+Failures on these tests: indexedby-5.4

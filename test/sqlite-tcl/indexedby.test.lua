@@ -44,14 +44,14 @@ proc EQP {sql} {
 #
 do_execsql_test indexedby-1.2 {
   EXPLAIN QUERY PLAN select * from t1 WHERE a = 10; 
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i1 (a=?)}}
 do_execsql_test indexedby-1.3 {
   EXPLAIN QUERY PLAN select * from t1 ; 
 } {0 0 0 {SCAN TABLE t1}}
 do_execsql_test indexedby-1.4 {
   EXPLAIN QUERY PLAN select * from t1, t2 WHERE c = 10; 
 } {
-  0 0 1 {SEARCH TABLE t2 USING COVERING INDEX i3 (c=?)}
+  0 0 1 {SEARCH TABLE t2 USING INDEX i3 (c=?)}
   0 1 0 {SCAN TABLE t1}
 }
 
@@ -131,11 +131,11 @@ do_test indexedby-2.7 {
 do_execsql_test indexedby-3.2 {
   EXPLAIN QUERY PLAN 
   SELECT * FROM t1 INDEXED BY 'i1' WHERE a = 'one' AND b = 'two'
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i1 (a=?)}}
 do_execsql_test indexedby-3.3 {
   EXPLAIN QUERY PLAN 
   SELECT * FROM t1 INDEXED BY 'i2' WHERE a = 'one' AND b = 'two'
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i2 (b=?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i2 (b=?)}}
 # do_test indexedby-3.4 {
 #   catchsql { SELECT * FROM t1 INDEXED BY 'i2' WHERE a = 'one' }
 # } {1 {no query solution}}
@@ -169,14 +169,14 @@ do_test indexedby-3.7 {
 do_execsql_test indexedby-4.1 {
   EXPLAIN QUERY PLAN SELECT * FROM t1, t2 WHERE a = c 
 } {
-  0 0 0 {SCAN TABLE t1} 
-  0 1 1 {SEARCH TABLE t2 USING COVERING INDEX i3 (c=?)}
+  0 0 0 {SCAN TABLE t1 USING INDEX i2} 
+  0 1 1 {SEARCH TABLE t2 USING INDEX i3 (c=?)}
 }
 do_execsql_test indexedby-4.2 {
   EXPLAIN QUERY PLAN SELECT * FROM t1 INDEXED BY 'i1', t2 WHERE a = c
 } {
-  0 0 1 {SCAN TABLE t2} 
-  0 1 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}
+  0 0 0 {SCAN TABLE t1 USING INDEX i1} 
+  0 1 1 {SEARCH TABLE t2 USING INDEX i3 (c=?)}
 }
 # do_test indexedby-4.3 {
 #   catchsql {
@@ -196,10 +196,10 @@ do_execsql_test indexedby-4.2 {
 do_execsql_test indexedby-5.1 {
   CREATE VIEW v2 AS SELECT * FROM t1 INDEXED BY 'i1' WHERE a > 5;
   EXPLAIN QUERY PLAN SELECT * FROM v2 
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a>?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i1 (a>?)}}
 do_execsql_test indexedby-5.2 {
   EXPLAIN QUERY PLAN SELECT * FROM v2 WHERE b = 10 
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a>?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i1 (a>?)}}
 do_test indexedby-5.3 {
   execsql { DROP INDEX 'i1' }
   catchsql { SELECT * FROM v2 }
@@ -207,6 +207,7 @@ do_test indexedby-5.3 {
 
 # MUST_WORK_TEST
 
+# Tarantool: Working in WITHOUT ROWID case.
 do_test indexedby-5.4 {
   # Recreate index i1 in such a way as it cannot be used by the view query.
   execsql { CREATE INDEX i1 ON t1(b) }
@@ -242,16 +243,16 @@ do_execsql_test indexedby-7.1 {
 } {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}}
 do_execsql_test indexedby-7.2 {
   EXPLAIN QUERY PLAN DELETE FROM t1 NOT INDEXED WHERE a = 5 
-} {0 0 0 {SCAN TABLE t1}}
+} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}}
 do_execsql_test indexedby-7.3 {
   EXPLAIN QUERY PLAN DELETE FROM t1 INDEXED BY 'i1' WHERE a = 5
 } {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}}
 do_execsql_test indexedby-7.4 {
   EXPLAIN QUERY PLAN DELETE FROM t1 INDEXED BY 'i1' WHERE a = 5 AND b = 10
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i1 (a=?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i1 (a=?)}}
 do_execsql_test indexedby-7.5 {
   EXPLAIN QUERY PLAN DELETE FROM t1 INDEXED BY 'i2' WHERE a = 5 AND b = 10
-} {0 0 0 {SEARCH TABLE t1 USING COVERING INDEX i2 (b=?)}}
+} {0 0 0 {SEARCH TABLE t1 USING INDEX i2 (b=?)}}
 
 # MUST_WORK_TEST
 
