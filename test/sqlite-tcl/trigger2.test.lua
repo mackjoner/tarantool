@@ -707,9 +707,9 @@ do_test trigger2-8.1 {
 } {3 5 4}
 do_test trigger2-8.2 {
   execsql {
-    CREATE TABLE v1log(a PRIMARY KEY ,b,c,d,e,f);
+    CREATE TABLE v1log(id PRIMARY KEY, a,b,c,d,e,f);
     CREATE TRIGGER r1 INSTEAD OF DELETE ON v1 BEGIN
-      INSERT INTO v1log VALUES(OLD.x,NULL,OLD.y,NULL,OLD.z,NULL);
+      INSERT INTO v1log VALUES(OLD.x, OLD.x,NULL,OLD.y,NULL,OLD.z,NULL);
     END;
     DELETE FROM v1 WHERE x=1;
     SELECT * FROM v1log;
@@ -720,7 +720,7 @@ do_test trigger2-8.3 {
     DELETE FROM v1 WHERE x=3;
     SELECT * FROM v1log;
   }
-} {3 {} 5 {} 4 {}}
+} {3 3 {} 5 {} 4 {}}
 do_test trigger2-8.4 {
   execsql {
     INSERT INTO t1 VALUES(4,5,6);
@@ -728,27 +728,27 @@ do_test trigger2-8.4 {
     DELETE FROM v1 WHERE y=11;
     SELECT * FROM v1log;
   }
-} {9 {} 11 {} 10 {}}
+} {9 9 {} 11 {} 10 {}}
 do_test trigger2-8.5 {
   execsql {
     CREATE TRIGGER r2 INSTEAD OF INSERT ON v1 BEGIN
-      INSERT INTO v1log VALUES(NULL,NEW.x,NULL,NEW.y,NULL,NEW.z);
+      INSERT INTO v1log VALUES(NEW.x, NULL,NEW.x,NULL,NEW.y,NULL,NEW.z);
     END;
     DELETE FROM v1log;
     INSERT INTO v1 VALUES(1,2,3);
     SELECT * FROM v1log;
   }
-} {{} 1 {} 2 {} 3}
+} {1 {} 1 {} 2 {} 3}
 do_test trigger2-8.6 {
   execsql {
     CREATE TRIGGER r3 INSTEAD OF UPDATE ON v1 BEGIN
-      INSERT INTO v1log VALUES(OLD.x,NEW.x,OLD.y,NEW.y,OLD.z,NEW.z);
+      INSERT INTO v1log VALUES(OLD.x, OLD.x,NEW.x,OLD.y,NEW.y,OLD.z,NEW.z);
     END;
     DELETE FROM v1log;
     UPDATE v1 SET x=x+100, y=y+200, z=z+300;
     SELECT * FROM v1log;
   }
-} {3 103 5 205 4 304 9 109 11 211 10 310}
+} {3 3 103 5 205 4 304 9 9 109 11 211 10 310}
 
 # At one point the following was causing a segfault.
 do_test trigger2-9.1 {
