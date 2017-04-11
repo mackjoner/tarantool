@@ -114,13 +114,15 @@ do_test insert2-2.1 {
     SELECT * FROM t3;
   }
 } {1 {} 2}
-do_test insert2-2.2 {
-  execsql {
-    DELETE FROM t3;
-    INSERT INTO t3(c,b) SELECT * FROM t4;
-    SELECT * FROM t3;
-  }
-} {{} 2 1}
+# Tarantool: `a` is PK, so NULL is prohibited.
+# Comment the case.
+#do_test insert2-2.2 {
+#  execsql {
+#    DELETE FROM t3;
+#    INSERT INTO t3(c,b) SELECT * FROM t4;
+#    SELECT * FROM t3;
+#  }
+#} {{} 2 1}
 do_test insert2-2.3 {
   execsql {
     DELETE FROM t3;
