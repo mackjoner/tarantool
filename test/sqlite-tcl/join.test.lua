@@ -437,7 +437,7 @@ do_test join-5.1 {
     select usuarios.id, usuarios.nombre, centros.centro from
     usuarios left outer join centros on usuarios.idcentro = centros.id;
   }
-} {1 a xxx 2 b xxx 3 c {}}
+} {3 c {} 1 a xxx 2 b xxx}
 
 # A test for ticket #247.
 #
