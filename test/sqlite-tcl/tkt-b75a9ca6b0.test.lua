@@ -53,10 +53,10 @@ foreach {tn q res eqp} [subst -nocommands {
   {1 3  2 2  3 1} {$idxscan}
 
   5 "SELECT x,y FROM t1 GROUP BY y ORDER BY y"
-  {3 1  2 2  1 3} {$tblscan $grpsort}
+  {3 1  2 2  1 3} {$idxscan $grpsort}
 
   6 "SELECT x,y FROM t1 GROUP BY y ORDER BY x"
-  {1 3  2 2  3 1} {$tblscan $grpsort $sort}
+  {1 3  2 2  3 1} {$idxscan $grpsort $sort}
 
   7 "SELECT x,y FROM t1 GROUP BY x, y ORDER BY x, y DESC"
   {1 3  2 2  3 1} {$idxscan $sort}
