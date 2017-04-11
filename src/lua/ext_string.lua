@@ -66,7 +66,7 @@ end
 
 --- Split a string into a list of strings using delimiter.
 -- this version is taken from http://lua-users.org/wiki/SplitJoin
--- @function gsplit
+-- @function split
 -- @string       inp  the string
 -- @string[opt]  sep  a delimiter (defaults to whitespace)
 -- @int[opt]     max  maximum number of splits (>= 0)
