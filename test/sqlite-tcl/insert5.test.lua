@@ -35,6 +35,7 @@ proc uses_temp_table {sql} {
 
 # Construct the sample database.
 #
+# Tarantool: pk in both tables was `autoincrement`
 do_test insert5-1.0 {
   #forcedelete test2.db test2.db-journal
   execsql {

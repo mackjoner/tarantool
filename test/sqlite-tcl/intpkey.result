@@ -3,23 +3,12 @@ intpkey-1.1... Ok
 intpkey-1.2... Ok
 intpkey-1.3... Ok
 intpkey-1.4... Ok
-intpkey-1.6...
-Expected: [1 {UNIQUE constraint failed: t1.a}]
-     Got: [1 {unknown error}]
+intpkey-1.6... Ok
 intpkey-1.8... Ok
 intpkey-1.10... Ok
 intpkey-1.11... Ok
 intpkey-1.12.1... Ok
 intpkey-1.12.2... Ok
-intpkey-1.13.1...
-Expected: [1 {datatype mismatch}]
-     Got: [1 {unknown error}]
-intpkey-1.13.2...
-Expected: [1 {datatype mismatch}]
-     Got: [1 {unknown error}]
-intpkey-1.14...
-Expected: [1 {datatype mismatch}]
-     Got: [1 {unknown error}]
 intpkey-1.15... Ok
 intpkey-1.16... Ok
 intpkey-2.1... Ok
@@ -29,20 +18,14 @@ intpkey-2.6... Ok
 intpkey-2.7... Ok
 intpkey-2.7... Ok
 intpkey-3.1... Ok
-intpkey-3.2...
-Expected: [5 hello world 0]
-     Got: [5 hello world 2]
+intpkey-3.2... Ok
 intpkey-3.3... Ok
 intpkey-3.4...
 Expected: [5 hello world 3]
      Got: [5 hello world 2]
 intpkey-3.5... Ok
-intpkey-3.6...
-Expected: [5 hello world 3]
-     Got: [5 hello world 2]
-intpkey-3.7...
-Expected: [5 hello world 11 hello world 5]
-     Got: [5 hello world 11 hello world 3]
+intpkey-3.6... Ok
+intpkey-3.7... Ok
 intpkey-3.8...
 Expected: [11 hello world 4]
      Got: [11 hello world 2]
@@ -50,17 +33,11 @@ intpkey-3.9... Ok
 intpkey-4.6...
 Expected: [11 hello world 0]
      Got: [11 hello world 1]
-intpkey-4.11...
-Expected: [-4 y z 1]
-     Got: [-4 y z 2]
+intpkey-4.11... Ok
 intpkey-4.12... Ok
-intpkey-5.1...
-Expected: [0 zero entry 0]
-     Got: [0 zero entry 2]
+intpkey-5.1... Ok
 intpkey-6.1... Ok
-intpkey-6.2...
-Expected: [5 hello world 11 hello world]
-     Got: [11 hello world 5 hello world]
+intpkey-6.2... Ok
 intpkey-6.3... Ok
 intpkey-6.4... Ok
 intpkey-7.1... Ok
@@ -71,12 +48,6 @@ intpkey-11.1... Ok
 intpkey-11.1... Ok
 intpkey-13.1... Ok
 intpkey-13.2... Ok
-intpkey-13.3...
-Expected: [1 {datatype mismatch}]
-     Got: [1 {unknown error}]
-intpkey-13.4...
-Expected: [1 {datatype mismatch}]
-     Got: [1 {unknown error}]
 intpkey-13.5... Ok
 intpkey-14.1... Ok
 intpkey-14.2... Ok
@@ -85,8 +56,6 @@ intpkey-14.4... Ok
 intpkey-14.5... Ok
 intpkey-14.6... Ok
 intpkey-15.1... Ok
-intpkey-15.2...
-Error: unknown error
 intpkey-15.3... Ok
 intpkey-15.4...
 Expected: [big-1 big-2]
@@ -96,5 +65,5 @@ intpkey-15.6...
 Expected: [y zero 2 hello second hello b-20 b-22 new 3 big-1 big-2]
      Got: [y zero 2 hello second hello b-20 b-22 new 3 big-1]
 intpkey-15.7... Ok
-18 errors out of 64 tests
-Failures on these tests: intpkey-1.6 intpkey-1.13.1 intpkey-1.13.2 intpkey-1.14 intpkey-3.2 intpkey-3.4 intpkey-3.6 intpkey-3.7 intpkey-3.8 intpkey-4.6 intpkey-4.11 intpkey-5.1 intpkey-6.2 intpkey-13.3 intpkey-13.4 intpkey-15.2 intpkey-15.4 intpkey-15.6
+5 errors out of 58 tests
+Failures on these tests: intpkey-3.4 intpkey-3.8 intpkey-4.6 intpkey-15.4 intpkey-15.6
