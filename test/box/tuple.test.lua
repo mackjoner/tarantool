@@ -317,3 +317,4 @@ box.tuple.new(string.rep('x', 100 * 1024 * 1024)) == nil
 collectgarbage('collect') -- collect huge string
 
 test_run:cmd("clear filter")
+test_run:cmd("restart server default")

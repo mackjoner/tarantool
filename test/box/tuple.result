@@ -967,3 +967,4 @@ test_run:cmd("clear filter")
 ---
 - true
 ...
+test_run:cmd("restart server default")
