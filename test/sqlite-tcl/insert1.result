@@ -8,16 +8,10 @@ insert-1.5... Ok
 insert-1.5b... Ok
 insert-1.5c... Ok
 insert-1.6... Ok
-insert-1.6b...
-Error: unknown error
-insert-1.6c...
-Expected: [{} 5 6 1 2 {} 8 {} 7]
-     Got: [1 2 {} 8 {} 7]
+insert-1.6c... Ok
 insert-4.1... Ok
 insert-4.2... Ok
 insert-4.3... Ok
-insert-4.4... Ok
-insert-4.5... Ok
 insert-4.6... Ok
 insert-4.7... Ok
 insert-5.1... Ok
@@ -28,5 +22,4 @@ insert-5.7... Ok
 insert-6.1... Ok
 insert-10.1... Ok
 insert-10.2... Ok
-2 errors out of 28 tests
-Failures on these tests: insert-1.6b insert-1.6c
+0 errors out of 25 tests

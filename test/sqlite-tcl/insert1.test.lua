@@ -82,14 +82,16 @@ do_test insert-1.6 {
 
 # MUST_WORK_TEST
 
-do_test insert-1.6b {
-  execsql {INSERT INTO test1(two,three) VALUES(5,6)}
-  execsql {SELECT * FROM test1 ORDER BY one}
-} {{} 5 6 1 2 {}}
+# Tarantool: `one` is PK now, so NULL is prohibited.
+# comment test, fix expected result.
+#do_test insert-1.6b {
+#  execsql {INSERT INTO test1(two,three) VALUES(5,6)}
+#  execsql {SELECT * FROM test1 ORDER BY one}
+#} {{} 5 6 1 2 {}}
 do_test insert-1.6c {
   execsql {INSERT INTO test1(three,one) VALUES(7,8)}
   execsql {SELECT * FROM test1 ORDER BY one}
-} {{} 5 6 1 2 {} 8 {} 7}
+} {1 2 {} 8 {} 7}
 
 
 # MUST_WORK_TEST
@@ -203,23 +205,24 @@ ifcapable subquery {
     }
   } {1 {no such column: t3.a}}
 }
-do_test insert-4.4 {
-  ifcapable subquery {
-    execsql {INSERT INTO t3 VALUES((SELECT b FROM t3 WHERE a=0),6,7);}
-  } else {
-    set b [execsql {SELECT b FROM t3 WHERE a = 0}]
-    if {$b==""} {set b NULL}
-    execsql "INSERT INTO t3 VALUES($b,6,7);"
-  }
-  execsql {
-    SELECT * FROM t3 ORDER BY a;
-  }
-} {{} 6 7 6 4 5 7 5 6}
-do_test insert-4.5 {
-  execsql {
-    SELECT b,c FROM t3 WHERE a IS NULL;
-  }
-} {6 7}
+# Tarantool: a is PK now, so NULL is prohibited. Comment tests
+#do_test insert-4.4 {
+#  ifcapable subquery {
+#    execsql {INSERT INTO t3 VALUES((SELECT b FROM t3 WHERE a=0),6,7);}
+#  } else {
+#    set b [execsql {SELECT b FROM t3 WHERE a = 0}]
+#    if {$b==""} {set b NULL}
+#    execsql "INSERT INTO t3 VALUES($b,6,7);"
+#  }
+#  execsql {
+#    SELECT * FROM t3 ORDER BY a;
+#  }
+#} {{} 6 7 6 4 5 7 5 6}
+#do_test insert-4.5 {
+#  execsql {
+#    SELECT b,c FROM t3 WHERE a IS NULL;
+#  }
+#} {6 7}
 do_test insert-4.6 {
   catchsql {
     INSERT INTO t3 VALUES(notafunc(2,3),2,3);
