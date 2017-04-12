@@ -2,11 +2,8 @@ tkt-385a5b56b9-1.0... Ok
 tkt-385a5b56b9-1.1... Ok
 tkt-385a5b56b9-1.3... Ok
 tkt-385a5b56b9-2.0... Ok
-tkt-385a5b56b9-2.1...
-Expected: [0 0 0 {SCAN TABLE t2 USING COVERING INDEX t2x}]
-     Got: [0 0 0 {SCAN TABLE t2}]
+tkt-385a5b56b9-2.1... Ok
 tkt-385a5b56b9-2.2... Ok
 tkt-385a5b56b9-2.3... Ok
 tkt-385a5b56b9-2.4... Ok
-1 errors out of 9 tests
-Failures on these tests: tkt-385a5b56b9-2.1
+0 errors out of 9 tests

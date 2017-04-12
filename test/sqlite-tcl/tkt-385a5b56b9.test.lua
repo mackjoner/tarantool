@@ -42,15 +42,15 @@ do_eqp_test 2.1 { SELECT DISTINCT x FROM t2 } {
 }
 
 do_eqp_test 2.2 { SELECT DISTINCT y FROM t2 } {
-  0 0 0 {SCAN TABLE t2 USING COVERING INDEX 522_2_t2y}
+  0 0 0 {SCAN TABLE t2 USING COVERING INDEX t2y}
 }
 
 do_eqp_test 2.3 { SELECT DISTINCT x, y FROM t2 WHERE y=10 } {
-  0 0 0 {SEARCH TABLE t2 USING COVERING INDEX 522_2_t2y (y=?)}
+  0 0 0 {SEARCH TABLE t2 USING COVERING INDEX t2y (y=?)}
 }
 
 do_eqp_test 2.4 { SELECT DISTINCT x, y FROM t2 WHERE x=10 } {
-  0 0 0 {SEARCH TABLE t2 USING PRIMARY KEY (x=?)}
+  0 0 0 {SEARCH TABLE t2 USING INDEX t2x (x=?)}
 }
 
 finish_test
