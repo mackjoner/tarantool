@@ -49,7 +49,7 @@ do_execsql_test 1.3 {
 } {null/four null/three a/one b/two}
 
 do_execsql_test 1.4 {
-  DROP INDEX '517_1_i1';
+  DROP INDEX 'i1';
   CREATE UNIQUE INDEX i1 ON t8(b, c);
   SELECT coalesce(b, 'null') || '/' || c FROM t8 x ORDER BY x.b, x.c
 } {null/four null/three a/one b/two}
@@ -69,7 +69,7 @@ do_test 2.2 {
 
 do_test 2.3 {
   cksort { SELECT * FROM t2 WHERE b = 10 ORDER BY a, b, c }
-} {sort}
+} {nosort}
 
 do_test 2.4 {
   cksort { SELECT * FROM t2 WHERE a IS NULL ORDER BY a, b, c }
