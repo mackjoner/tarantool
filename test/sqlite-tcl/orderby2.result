@@ -1,6 +1,5 @@
 orderby2-1.0... Ok
 orderby2-1.1a... Ok
-orderby2-1.1b... Ok
 orderby2-1.2a... Ok
 orderby2-1.2b...
 Expected: [~/ORDER BY/]
@@ -11,5 +10,5 @@ orderby2-2.0... Ok
 orderby2-2.1... Ok
 orderby2-2.2... Ok
 orderby2-2.3... Ok
-1 errors out of 12 tests
+1 errors out of 11 tests
 Failures on these tests: orderby2-1.2b

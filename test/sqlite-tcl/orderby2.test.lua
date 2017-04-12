@@ -38,12 +38,14 @@ do_test 1.1a {
     SELECT e FROM t1, t2 WHERE a=1 AND d=b ORDER BY d, e;
   }
 } {eleven oneteen}
-do_test 1.1b {
-  db eval {
-    EXPLAIN QUERY PLAN
-    SELECT e FROM t1, t2 WHERE a=1 AND d=b ORDER BY d, e;
-  }
-} {~/ORDER BY/}
+# Tarantool: no-rowid changes query plan to use ORDER BY.
+# Verified w/ vanilla SQLite. Comment the case.
+#do_test 1.1b {
+#  db eval {
+#    EXPLAIN QUERY PLAN
+#    SELECT e FROM t1, t2 WHERE a=1 AND d=b ORDER BY d, e;
+#  }
+#} {~/ORDER BY/}
 
 do_test 1.2a {
   db eval {
