@@ -241,13 +241,15 @@ do_test subquery-2.5.3.1 {
     SELECT * FROM t4 WHERE x IN (SELECT a FROM t3);
   }
 } {10.0}
-do_test subquery-2.5.3.2 {
+# Tarantool: no-rowid is implied for the table, so query plan contains
+# scan over t4i. Verified w/ vanilla SQLite. Comment this case
+#do_test subquery-2.5.3.2 {
   # Verify that the t4i index was not used in the previous query
-  execsql {
-    EXPLAIN QUERY PLAN
-    SELECT * FROM t4 WHERE x IN (SELECT a FROM t3);
-  }
-} {~/t4i/}
+#  execsql {
+#    EXPLAIN QUERY PLAN
+#    SELECT * FROM t4 WHERE x IN (SELECT a FROM t3);
+#  }
+#} {~/t4i/}
 do_test subquery-2.5.4 {
   execsql {
     DROP TABLE t3;

@@ -27,7 +27,6 @@ subquery-2.4.3... Ok
 subquery-2.5.1... Ok
 subquery-2.5.2... Ok
 subquery-2.5.3.1... Ok
-subquery-2.5.3.2... Ok
 subquery-2.5.4... Ok
 subquery-3.1... Ok
 subquery-3.1.1... Ok
@@ -58,4 +57,4 @@ subquery-6.2... Ok
 subquery-6.3... Ok
 subquery-6.4... Ok
 subquery-8.1... Ok
-0 errors out of 61 tests
+0 errors out of 60 tests
