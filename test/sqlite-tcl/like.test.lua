@@ -191,7 +191,7 @@ do_test like-3.1 {
   queryplan {
     SELECT x FROM t1 WHERE x LIKE 'abc%' ORDER BY 1;
   }
-} {ABC {ABC abc xyz} abc abcd sort t1 *}
+} {ABC {ABC abc xyz} abc abcd nosort t1 *}
 do_test like-3.2 {
   set sqlite_like_count
 } {12}
@@ -304,10 +304,12 @@ do_test like-3.15 {
   queryplan {
     SELECT x FROM t1 WHERE x LIKE 'abc%' ORDER BY 1;
   }
-} {abc abcd sort t1 *}
+} {abc abcd nosort t1 *}
+# Tarantool:  `x` is PK now, so no need for func invocation,
+# it can be done using idx seek. Replace 12 -> 0
 do_test like-3.16 {
   set sqlite_like_count
-} 12
+} 0
 
 # No GLOB optimization without an index.
 #
@@ -316,10 +318,11 @@ do_test like-3.17 {
   queryplan {
     SELECT x FROM t1 WHERE x GLOB 'abc*' ORDER BY 1;
   }
-} {abc abcd sort t1 *}
+} {abc abcd nosort t1 *} 
+# Tarantool: see comment above. Replace 12 -> 0
 do_test like-3.18 {
   set sqlite_like_count
-} 12
+} 0
 
 # GLOB is optimized regardless of the case_sensitive_like setting.
 #

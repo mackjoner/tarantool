@@ -15,135 +15,63 @@ like-2.1... Ok
 like-2.2... Ok
 like-2.3... Ok
 like-2.4... Ok
-like-3.1...
-Expected: [ABC {ABC abc xyz} abc abcd sort t1 *]
-     Got: [ABC {ABC abc xyz} abc abcd nosort t1 *]
+like-3.1... Ok
 like-3.2... Ok
-like-3.3...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-3.3... Ok
 like-3.4... Ok
-like-3.4.2...
-Expected: [a nosort {} i1]
-     Got: [a nosort t1 *]
-like-3.4.3...
-Expected: [ab nosort {} i1]
-     Got: [ab nosort t1 *]
-like-3.4.4...
-Expected: [abcd nosort {} i1]
-     Got: [abcd nosort t1 *]
-like-3.4.5...
-Expected: [nosort {} i1]
-     Got: [nosort t1 *]
-like-3.5...
-Expected: [abc nosort {} i1]
-     Got: [abc nosort t1 *]
+like-3.4.2... Ok
+like-3.4.3... Ok
+like-3.4.4... Ok
+like-3.4.5... Ok
+like-3.5... Ok
 like-3.6... Ok
-like-3.7...
-Expected: [abcd abd nosort {} i1]
-     Got: [abcd abd nosort t1 *]
+like-3.7... Ok
 like-3.8... Ok
-like-3.9...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-3.9... Ok
 like-3.10... Ok
-like-3.11...
-Expected: [abcd bcd nosort {} i1]
-     Got: [abcd bcd nosort t1 *]
+like-3.11... Ok
 like-3.12... Ok
-like-3.13...
-Expected: [ABC {ABC abc xyz} abc abcd nosort {} i1]
-     Got: [ABC {ABC abc xyz} abc abcd nosort t1 *]
+like-3.13... Ok
 like-3.14... Ok
-like-3.15...
-Expected: [abc abcd sort t1 *]
-     Got: [abc abcd nosort t1 *]
-like-3.16...
-Expected: [12]
-     Got: [0]
-like-3.17...
-Expected: [abc abcd sort t1 *]
-     Got: [abc abcd nosort t1 *]
-like-3.18...
-Expected: [12]
-     Got: [0]
-like-3.19...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-3.15... Ok
+like-3.16... Ok
+like-3.17... Ok
+like-3.18... Ok
+like-3.19... Ok
 like-3.20... Ok
-like-3.21...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-3.21... Ok
 like-3.22... Ok
-like-3.23...
-Expected: [abd acd nosort {} i1]
-     Got: [abd acd nosort t1 *]
+like-3.23... Ok
 like-3.24... Ok
-like-3.25...
-Expected: [a nosort {} i1]
-     Got: [a nosort t1 *]
-like-3.26...
-Expected: [abcd nosort {} i1]
-     Got: [abcd nosort t1 *]
-like-3.27...
-Expected: [nosort {} i1]
-     Got: [nosort t1 *]
-like-4.1...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-3.25... Ok
+like-3.26... Ok
+like-3.27... Ok
+like-4.1... Ok
 like-4.2... Ok
-like-4.3...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-4.3... Ok
 like-4.4... Ok
-like-4.5...
-Expected: [abc abcd nosort {} i1]
-     Got: [abc abcd nosort t1 *]
+like-4.5... Ok
 like-4.6... Ok
-like-5.1...
-Expected: [ABC {ABC abc xyz} abc abcd nosort {} i1]
-     Got: [ABC {ABC abc xyz} abc abcd nosort t1 *]
+like-5.1... Ok
 like-5.2... Ok
 like-5.3...
 Expected: [abc ABC {ABC abc xyz} abcd nosort {} i2]
      Got: [ABC {ABC abc xyz} abc abcd nosort t2 *]
-like-5.4...
-Expected: [0]
-     Got: [12]
-like-5.5...
-Expected: [abc abcd nosort {} i2]
-     Got: [abc abcd nosort t2 *]
-like-5.6...
-Expected: [12]
-     Got: [0]
-like-5.7...
-Expected: [abc abcd nosort {} i2]
-     Got: [abc abcd nosort t2 *]
-like-5.8...
-Expected: [12]
-     Got: [0]
-like-5.11...
-Expected: [ABC {ABC abc xyz} abc abcd nosort {} i1]
-     Got: [ABC {ABC abc xyz} abc abcd nosort t1 *]
+like-5.4... Ok
+like-5.5... Ok
+like-5.6... Ok
+like-5.7... Ok
+like-5.8... Ok
+like-5.11... Ok
 like-5.12... Ok
 like-5.13...
 Expected: [abc ABC {ABC abc xyz} abcd nosort {} i2]
      Got: [ABC {ABC abc xyz} abc abcd nosort t2 *]
-like-5.14...
-Expected: [0]
-     Got: [12]
-like-5.15...
-Expected: [ABC {ABC abc xyz} nosort {} i2]
-     Got: [ABC {ABC abc xyz} nosort t2 *]
-like-5.16...
-Expected: [12]
-     Got: [0]
-like-5.17...
-Expected: [ABC {ABC abc xyz} nosort {} i2]
-     Got: [ABC {ABC abc xyz} nosort t2 *]
-like-5.18...
-Expected: [12]
-     Got: [0]
+like-5.14... Ok
+like-5.15... Ok
+like-5.16... Ok
+like-5.17... Ok
+like-5.18... Ok
 like-5.21...
 Expected: [zz-lower-lower zZ-lower-upper Zz-upper-lower ZZ-upper-upper nosort {} i2]
      Got: [ZZ-upper-upper Zz-upper-lower zZ-lower-upper zz-lower-lower nosort t2 *]
@@ -156,18 +84,10 @@ Expected: [zz-lower-lower zZ-lower-upper Zz-upper-lower ZZ-upper-upper nosort {}
 like-5.24...
 Expected: [zz-lower-lower zZ-lower-upper Zz-upper-lower ZZ-upper-upper nosort {} i2]
      Got: [ZZ-upper-upper Zz-upper-lower zZ-lower-upper zz-lower-lower nosort t2 *]
-like-5.25...
-Expected: [zz-lower-lower nosort {} i3]
-     Got: [zz-lower-lower nosort {} 527_1_i3]
-like-5.26...
-Expected: [zZ-lower-upper nosort {} i3]
-     Got: [zZ-lower-upper nosort {} 527_1_i3]
-like-5.27...
-Expected: [Zz-upper-lower nosort {} i3]
-     Got: [Zz-upper-lower nosort {} 527_1_i3]
-like-5.28...
-Expected: [ZZ-upper-upper nosort {} i3]
-     Got: [ZZ-upper-upper nosort {} 527_1_i3]
+like-5.25... Ok
+like-5.26... Ok
+like-5.27... Ok
+like-5.28... Ok
 like-6.1... Ok
 like-8.1... Ok
 like-8.2... Ok
@@ -194,9 +114,7 @@ like-10.1... Ok
 like-10.2... Ok
 like-10.3... Ok
 like-10.4... Ok
-like-10.5...
-Expected: [12 123 scan 4 like 0]
-     Got: [12 123 scan 5 like 6]
+like-10.5... Ok
 like-10.6... Ok
 like-10.10... Ok
 like-10.11... Ok
@@ -210,44 +128,30 @@ like-11.2... Ok
 like-11.3...
 Expected: [abc abcd ABC ABCD sort {} t11b]
      Got: [abc abcd ABC ABCD sort t11 *]
-like-11.4...
-Expected: [abc abcd nosort t11 *]
-     Got: [abc abcd sort {} 547_1_t11b]
+like-11.4... Ok
 like-11.5...
 Expected: [abc abcd ABC ABCD sort {} t11bnc]
      Got: [abc abcd ABC ABCD sort t11 *]
 like-11.6...
 Expected: [abc abcd ABC ABCD sort {} t11bnc]
      Got: [abc abcd ABC ABCD sort t11 *]
-like-11.7...
-Expected: [abc abcd sort {} t11bb]
-     Got: [abc abcd sort {} 547_1_t11bnc]
-like-11.8...
-Expected: [abc abcd sort {} t11bb]
-     Got: [abc abcd sort {} 547_1_t11bnc]
+like-11.7... Ok
+like-11.8... Ok
 like-11.9...
 Expected: [abc abcd ABC ABCD sort {} t11cnc]
      Got: [abc abcd ABC ABCD sort t11 *]
-like-11.10...
-Expected: [abc abcd sort {} t11cb]
-     Got: [abc abcd sort {} 547_3_t11cnc]
+like-11.10... Ok
 like-12.1... Ok
 like-12.2... Ok
 like-12.3... Ok
 like-12.4... Ok
 like-12.5... Ok
 like-12.6... Ok
-like-12.11...
-Expected: [/SEARCH/]
-     Got: [0 0 0 {SCAN TABLE t12nc} 0 0 0 {USE TEMP B-TREE FOR ORDER BY}]
+like-12.11... Ok
 like-12.12... Ok
-like-12.13...
-Expected: [/SEARCH/]
-     Got: [0 0 0 {SCAN TABLE t12nc} 0 0 0 {USE TEMP B-TREE FOR ORDER BY}]
+like-12.13... Ok
 like-12.14... Ok
-like-12.15...
-Expected: [/SEARCH/]
-     Got: [0 0 0 {SCAN TABLE t12nc} 0 0 0 {USE TEMP B-TREE FOR ORDER BY}]
+like-12.15... Ok
 like-12.16... Ok
-62 errors out of 128 tests
-Failures on these tests: like-3.1 like-3.3 like-3.4.2 like-3.4.3 like-3.4.4 like-3.4.5 like-3.5 like-3.7 like-3.9 like-3.11 like-3.13 like-3.15 like-3.16 like-3.17 like-3.18 like-3.19 like-3.21 like-3.23 like-3.25 like-3.26 like-3.27 like-4.1 like-4.3 like-4.5 like-5.1 like-5.3 like-5.4 like-5.5 like-5.6 like-5.7 like-5.8 like-5.11 like-5.13 like-5.14 like-5.15 like-5.16 like-5.17 like-5.18 like-5.21 like-5.22 like-5.23 like-5.24 like-5.25 like-5.26 like-5.27 like-5.28 like-9.1 like-9.3.2 like-9.5.1 like-9.5.2 like-10.5 like-11.3 like-11.4 like-11.5 like-11.6 like-11.7 like-11.8 like-11.9 like-11.10 like-12.11 like-12.13 like-12.15
+19 errors out of 128 tests
+Failures on these tests: like-5.3 like-5.13 like-5.21 like-5.22 like-5.23 like-5.24 like-9.1 like-9.2 like-9.3.1 like-9.3.2 like-9.4.1 like-9.4.2 like-9.4.3 like-9.5.1 like-9.5.2 like-11.3 like-11.5 like-11.6 like-11.9
