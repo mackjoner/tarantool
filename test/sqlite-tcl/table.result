@@ -36,21 +36,13 @@ table-9.2... Ok
 table-11.1... Ok
 table-11.2... Ok
 table-13.1... Ok
-table-13.2.1...
-Expected: [12:00:00 1976-07-04 {1976-07-04 12:00:00}]
-     Got: [{} {} {}]
-table-13.2.2...
-Expected: [14:00:00 1994-04-16 {1994-04-16 14:00:00}]
-     Got: [{} {} {}]
-table-13.2.3...
-Expected: [00:00:00 2000-01-01 {2000-01-01 00:00:00}]
-     Got: [{} {} {}]
-table-13.2.4...
-Expected: [12:34:56 2003-12-31 {2003-12-31 12:34:56}]
-     Got: [{} {} {}]
+table-13.2.1... Ok
+table-13.2.2... Ok
+table-13.2.3... Ok
+table-13.2.4... Ok
 table-14.1... Ok
 table-14.2... Ok
 table-15.1... Ok
 table-15.2... Ok
-4 errors out of 47 tests
+0 errors out of 47 tests
 Failures on these tests: table-13.2.1 table-13.2.2 table-13.2.3 table-13.2.4
