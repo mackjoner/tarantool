@@ -529,6 +529,42 @@ struct vy_range {
 	bool is_level_zero;
 };
 
+/**
+ * Prior values of level zero parameters of a range. It is need
+ * to correctly restore them in case of abort. We can't store
+ * these values in vy_task, since the coalesce can involve
+ * multiple ranges.
+ */
+struct vy_stashed_level_zero {
+	uint64_t max_dump_size;
+};
+
+static inline struct vy_stashed_level_zero *
+vy_stashed_level_zero_new(int count)
+{
+	int size = count * sizeof(struct vy_stashed_level_zero);
+	struct vy_stashed_level_zero *s =
+		(struct vy_stashed_level_zero *) malloc(size);
+	if (s == NULL)
+		diag_set(OutOfMemory, size, "malloc", "s");
+	return s;
+}
+
+static inline void
+vy_range_stash_level_zero(struct vy_range *range,
+			  struct vy_stashed_level_zero *s)
+{
+	s->max_dump_size = range->max_dump_size;
+	range->max_dump_size = 0;
+}
+
+static inline void
+vy_range_apply_stashed_level_zero(struct vy_range *range,
+				  struct vy_stashed_level_zero *s)
+{
+	range->max_dump_size = MAX(range->max_dump_size, s->max_dump_size);
+}
+
 typedef rb_tree(struct vy_range) vy_range_tree_t;
 
 /**
@@ -3697,16 +3733,17 @@ struct vy_task {
 	double bloom_fpr;
 	/** Max written key. */
 	char *max_written_key;
-	/**
-	 * Max dump size remembered before compaction. Used to
-	 * restore the max dump size in case of compaction abort.
-	 */
-	uint64_t saved_max_dump_size;
 	/** Count of ranges to compact. */
 	int run_count;
 	/** Range of ranges to coalesce: [begin, end). */
 	struct vy_range *coalesce_begin;
 	struct vy_range *coalesce_end;
+	/**
+	 * Stashed values of level zero parameters of the range.
+	 * It is used to correctly restore them in a case of
+	 * abort.
+	 */
+	struct vy_stashed_level_zero *stash;
 };
 
 /**
@@ -3741,6 +3778,8 @@ vy_task_delete(struct mempool *pool, struct vy_task *task)
 	diag_destroy(&task->diag);
 	if (task->max_written_key != NULL)
 		free(task->max_written_key);
+	if (task->stash != NULL)
+		free(task->stash);
 	TRASH(task);
 	mempool_free(pool, task);
 }
@@ -4406,8 +4445,7 @@ vy_task_compact_abort(struct vy_task *task, bool in_shutdown)
 	/* The iterator has been cleaned up in worker. */
 	vy_write_iterator_delete(task->wi);
 	/* Restore the max dump size and compact priority. */
-	range->max_dump_size = MAX(task->saved_max_dump_size,
-				   range->max_dump_size);
+	vy_range_apply_stashed_level_zero(range, task->stash);
 	vy_range_update_compact_priority(range);
 
 	if (!in_shutdown && !index->is_dropped) {
@@ -4456,6 +4494,10 @@ vy_task_compact_new(struct mempool *pool, struct vy_range *range,
 		return vy_task_coalesce_new(pool, first, last, range_count,
 					    p_task);
 
+	struct vy_stashed_level_zero *stash = vy_stashed_level_zero_new(1);
+	if (stash == NULL)
+		return -1;
+
 	struct vy_task *task = vy_task_new(pool, index, &compact_ops);
 	if (task == NULL)
 		goto err_task;
@@ -4478,11 +4520,10 @@ vy_task_compact_new(struct mempool *pool, struct vy_range *range,
 	task->wi = wi;
 	task->dump_lsn = xm->lsn;
 	task->bloom_fpr = index->env->conf->bloom_fpr;
-	task->saved_max_dump_size = range->max_dump_size;
 	task->run_count = range->compact_priority;
-	range->max_dump_size = 0;
+	task->stash = stash;
+	vy_range_stash_level_zero(range, stash);
 	range->compact_priority = 0;
-
 	vy_range_wait_pinned(range);
 	vy_scheduler_remove_range(scheduler, range);
 
@@ -4498,6 +4539,7 @@ err_mem:
 err_run:
 	vy_task_delete(pool, task);
 err_task:
+	free(stash);
 	say_error("%s: can't start range compacting %s: %s", index->name,
 		  vy_range_str(range), diag_last_error(diag_get())->errmsg);
 	return -1;
