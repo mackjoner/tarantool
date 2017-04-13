@@ -129,8 +129,8 @@ vy_mem_tree_cmp_key(const struct tuple *a, struct tree_mem_key *key,
  * and other keys in that chain.
  */
 struct vy_mem {
-	/** Link in range->frozen list. */
-	struct rlist in_frozen;
+	/** Link in range->sealed list. */
+	struct rlist in_sealed;
 	/** Link in scheduler->dirty_mems list. */
 	struct rlist in_dirty;
 	/** BPS tree */
