@@ -24,27 +24,27 @@ set ::testprefix minmax
 do_test minmax-1.0 {
   execsql {
     BEGIN;
-    CREATE TABLE t1(x PRIMARY KEY, y);
-    INSERT INTO t1 VALUES(1,1);
-    INSERT INTO t1 VALUES(2,2);
-    INSERT INTO t1 VALUES(3,2);
-    INSERT INTO t1 VALUES(4,3);
-    INSERT INTO t1 VALUES(5,3);
-    INSERT INTO t1 VALUES(6,3);
-    INSERT INTO t1 VALUES(7,3);
-    INSERT INTO t1 VALUES(8,4);
-    INSERT INTO t1 VALUES(9,4);
-    INSERT INTO t1 VALUES(10,4);
-    INSERT INTO t1 VALUES(11,4);
-    INSERT INTO t1 VALUES(12,4);
-    INSERT INTO t1 VALUES(13,4);
-    INSERT INTO t1 VALUES(14,4);
-    INSERT INTO t1 VALUES(15,4);
-    INSERT INTO t1 VALUES(16,5);
-    INSERT INTO t1 VALUES(17,5);
-    INSERT INTO t1 VALUES(18,5);
-    INSERT INTO t1 VALUES(19,5);
-    INSERT INTO t1 VALUES(20,5);
+    CREATE TABLE t1(id PRIMARY KEY, x, y);
+    INSERT INTO t1 VALUES(1,1,1);
+    INSERT INTO t1 VALUES(2,2,2);
+    INSERT INTO t1 VALUES(3,3,2);
+    INSERT INTO t1 VALUES(4,4,3);
+    INSERT INTO t1 VALUES(5,5,3);
+    INSERT INTO t1 VALUES(6,6,3);
+    INSERT INTO t1 VALUES(7,7,3);
+    INSERT INTO t1 VALUES(8,8,4);
+    INSERT INTO t1 VALUES(9,9,4);
+    INSERT INTO t1 VALUES(10,10,4);
+    INSERT INTO t1 VALUES(11,11,4);
+    INSERT INTO t1 VALUES(12,12,4);
+    INSERT INTO t1 VALUES(13,13,4);
+    INSERT INTO t1 VALUES(14,14,4);
+    INSERT INTO t1 VALUES(15,15,4);
+    INSERT INTO t1 VALUES(16,16,5);
+    INSERT INTO t1 VALUES(17,17,5);
+    INSERT INTO t1 VALUES(18,18,5);
+    INSERT INTO t1 VALUES(19,19,5);
+    INSERT INTO t1 VALUES(20,20,5);
     COMMIT;
     SELECT DISTINCT y FROM t1 ORDER BY y;
   }
@@ -103,7 +103,7 @@ do_test minmax-1.24 {
 do_test minmax-2.0 {
   execsql {
     CREATE TABLE t2(a INTEGER PRIMARY KEY, b);
-    INSERT INTO t2 SELECT * FROM t1;
+    INSERT INTO t2 SELECT x, y FROM t1;
   }
   set sqlite_search_count 0
   execsql {SELECT min(a) FROM t2}
@@ -146,28 +146,31 @@ do_test minmax-3.2 {
     execsql { SELECT b FROM t2 WHERE a=max_a_t2() }
   }
 } {999}
+# Tarantool: No rowid incurs OP_Seek instead of OP_SeekRowid.
+# Former constains increment of search_count, while latter doesn't
+# update expected result: 0 -> 1
 do_test minmax-3.3 {
   set sqlite_search_count
-} {0}
+} {1}
 
 ifcapable {compound && subquery} {
   do_test minmax-4.1 {
     execsql {
       SELECT coalesce(min(x+0),-1), coalesce(max(x+0),-1) FROM
-        (SELECT * FROM t1 UNION SELECT NULL as 'x', NULL as 'y')
+        (SELECT x, y FROM t1 UNION SELECT NULL as 'x', NULL as 'y')
     }
   } {1 20}
   do_test minmax-4.2 {
     execsql {
       SELECT y, coalesce(sum(x),0) FROM
-        (SELECT null AS x, y+1 AS y FROM t1 UNION SELECT * FROM t1)
+        (SELECT null AS x, y+1 AS y FROM t1 UNION SELECT x, y FROM t1)
       GROUP BY y ORDER BY y;
     }
   } {1 1 2 5 3 22 4 92 5 90 6 0}
   do_test minmax-4.3 {
     execsql {
       SELECT y, count(x), count(*) FROM
-        (SELECT null AS x, y+1 AS y FROM t1 UNION SELECT * FROM t1)
+        (SELECT null AS x, y+1 AS y FROM t1 UNION SELECT x, y FROM t1)
       GROUP BY y ORDER BY y;
     }
   } {1 1 1 2 2 3 3 4 5 4 8 9 5 5 6 6 0 1}
