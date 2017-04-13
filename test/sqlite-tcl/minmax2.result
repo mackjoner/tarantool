@@ -1,12 +1,8 @@
 minmax2-1.0... Ok
 minmax2-1.1... Ok
-minmax2-1.2...
-Expected: [19]
-     Got: [1]
+minmax2-1.2... Ok
 minmax2-1.3... Ok
-minmax2-1.4...
-Expected: [19]
-     Got: [0]
+minmax2-1.4... Ok
 minmax2-1.5... Ok
 minmax2-1.6... Ok
 minmax2-1.7... Ok
@@ -14,17 +10,13 @@ minmax2-1.8... Ok
 minmax2-1.9... Ok
 minmax2-1.10... Ok
 minmax2-2.0... Ok
-minmax2-2.1...
-Expected: [0]
-     Got: [1]
+minmax2-2.1... Ok
 minmax2-2.2... Ok
 minmax2-2.3... Ok
 minmax2-3.0... Ok
 minmax2-3.1... Ok
 minmax2-3.2... Ok
-minmax2-3.3...
-Expected: [0]
-     Got: [1]
+minmax2-3.3... Ok
 minmax2-4.1... Ok
 minmax2-4.2... Ok
 minmax2-4.3... Ok
@@ -55,5 +47,4 @@ minmax2-10.9... Ok
 minmax2-10.10... Ok
 minmax2-10.11... Ok
 minmax2-10.12... Ok
-4 errors out of 50 tests
-Failures on these tests: minmax2-1.2 minmax2-1.4 minmax2-2.1 minmax2-3.3
+0 errors out of 50 tests
