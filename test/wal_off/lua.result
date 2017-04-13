@@ -139,4 +139,3 @@ count
 box.space.test:drop()
 ---
 ...
-test_run:cmd("restart server default")

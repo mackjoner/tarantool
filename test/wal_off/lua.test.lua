@@ -71,4 +71,3 @@ for i = 1,100 do if done then break end fiber.sleep(0.01) end
 done and "count was calculated fast enough" or "count took too long to calculate"
 count
 box.space.test:drop()
-test_run:cmd("restart server default")

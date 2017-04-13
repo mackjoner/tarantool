@@ -126,26 +126,6 @@ errinj.set("ERRINJ_RELAY", false)
 - ok
 ...
 -- cleanup
-test_run:cmd("switch replica")
----
-- true
-...
-test_run:cmd("stop server default")
----
-- true
-...
-test_run:cmd("deploy server default")
----
-- true
-...
-test_run:cmd("start server default")
----
-- true
-...
-test_run:cmd("switch default")
----
-- true
-...
 test_run:cmd("stop server replica")
 ---
 - true
@@ -154,3 +134,10 @@ test_run:cmd("cleanup server replica")
 ---
 - true
 ...
+--test_run:cmd("setopt delimiter ';'")
+--if engine == 'vinyl' then
+--	_ = box.space._cluster:delete{2}
+--	_ = box.space._cluster:delete{3}
+--end;
+--test_run:cmd("setopt delimiter ''");
+test_run:cmd("restart server default with cleanup=1")
