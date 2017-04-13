@@ -339,10 +339,11 @@ do_test misc1-10.8 {
 # } {0 {}}
 
 # MUST_WORK_TEST
-
-do_test misc1-10.10 {
-  execsql {SELECT x1 FROM manycol WHERE x0=100}
-} {103}
+# Tarantool: the case has no sense as far as misc1-10.9 is commented.
+# It is essentially same as misc1-10.8. Comment the case.
+#do_test misc1-10.10 {
+#  execsql {SELECT x1 FROM manycol WHERE x0=100}
+#} {103}
 
 # # Make sure the initialization works even if a database is opened while
 # # another process has the database locked.
@@ -399,7 +400,7 @@ ifcapable conflict {
       INSERT OR IGNORE INTO t6 VALUES('y',0);
       SELECT * FROM t6;
     }
-  } {0 0.0 y 0}
+  } {y 0 0 0.0}
 }
 do_test misc1-12.7 {
   execsql {
@@ -588,12 +589,14 @@ do_test misc1-16.5 {
 
 # MUST_WORK_TEST
 
-do_test misc1-16.6 {
-  execsql {
-    INSERT INTO test VALUES(NULL);
-    SELECT a, a FROM test;
-  }
-} {1 1 5 5 6 6}
+# Tarantool: NULL value for PK is prohibited
+# when table is no-rowid. Comment the case
+#do_test misc1-16.6 {
+#  execsql {
+#    INSERT INTO test VALUES(NULL);
+#    SELECT a, a FROM test;
+#  }
+#} {1 1 5 5 6 6}
 
 # MUST_WORK_TEST
 

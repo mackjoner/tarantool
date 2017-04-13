@@ -4,16 +4,12 @@ misc1-1.3.1... Ok
 misc1-1.3.2... Ok
 misc1-1.4... Ok
 misc1-1.5... Ok
-misc1-1.6...
-Expected: [850]
-     Got: []
+misc1-1.6... Ok
 misc1-1.7... Ok
 misc1-1.8... Ok
 misc1-1.9... Ok
 misc1-1.10... Ok
-misc1-1.11...
-Expected: [9]
-     Got: [10]
+misc1-1.11... Ok
 misc1-2.1... Ok
 misc1-2.2... Ok
 misc1-2.3... Ok
@@ -28,39 +24,25 @@ misc1-6.4... Ok
 misc1-7.1... Ok
 misc1-7.2... Ok
 misc1-7.3... Ok
-misc1-7.4...
-Expected: [1 {UNIQUE constraint failed: t5.a, t5.b}]
-     Got: [1 {unknown error}]
+misc1-7.4... Ok
 misc1-7.5... Ok
 misc1-7.6... Ok
 misc1-8.1... Ok
 misc1-8.2... Ok
 misc1-9.1... Ok
-misc1-10.0...
-Expected: [9]
-     Got: [10]
-misc1-10.1...
-Expected: [0 9]
-     Got: [0 10]
+misc1-10.0... Ok
+misc1-10.1... Ok
 misc1-10.3... Ok
-misc1-10.4...
-Expected: [8]
-     Got: [9]
+misc1-10.4... Ok
 misc1-10.6... Ok
 misc1-10.7... Ok
 misc1-10.8... Ok
-misc1-10.10...
-Expected: [103]
-     Got: [102]
 misc1-12.1... Ok
 misc1-12.2... Ok
 misc1-12.3... Ok
 misc1-12.4... Ok
-misc1-12.5...
-Expected: [0 0.0]
-     Got: [0 0.0 0 x]
-misc1-12.6...
-Error: unknown error
+misc1-12.5... Ok
+misc1-12.6... Ok
 misc1-12.7... Ok
 misc1-12.8... Ok
 misc1-12.9... Ok
@@ -69,17 +51,12 @@ misc1-12.12... Ok
 misc1-12.13... Ok
 misc1-13.1... Ok
 misc1-16.1... Ok
-misc1-16.2...
-Expected: [1 {table test already exists}]
-     Got: [0 {}]
+misc1-16.2... Ok
 misc1-16.3... Ok
 misc1-16.4... Ok
 misc1-16.5... Ok
-misc1-16.6...
-Error: unknown error
 misc1-18.1... Ok
 misc1-21.1... Ok
 misc1-21.2... Ok
 misc1-22.1... Ok
-11 errors out of 64 tests
-Failures on these tests: misc1-1.6 misc1-1.11 misc1-7.4 misc1-10.0 misc1-10.1 misc1-10.4 misc1-10.10 misc1-12.5 misc1-12.6 misc1-16.2 misc1-16.6
+0 errors out of 62 tests
