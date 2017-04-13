@@ -63,11 +63,14 @@ do_test minmax3-1.1.1 {
   # Linear scan.
   count { SELECT max(y) FROM t1 WHERE x = '2'; }
 } {V 5}
+# Tarantool: On table without rowid OP_Seek is not emitted
+# (used to position by rowid). So, number of searches reduce
+# Update expected result: 9 -> 4.
 do_test minmax3-1.1.2 {
   # Index optimizes the WHERE x='2' constraint.
   execsql { CREATE INDEX i1 ON t1(x) }
   count   { SELECT max(y) FROM t1 WHERE x = '2'; }
-} {V 9}
+} {V 4}
 do_test minmax3-1.1.3 {
   # Index optimizes the WHERE x='2' constraint and the MAX(y).
   execsql { CREATE INDEX i2 ON t1(x,y) }
@@ -84,20 +87,22 @@ do_test minmax3-1.1.5 {
 do_test minmax3-1.1.6 {
   count   { SELECT max(y) FROM t1 WHERE x = '2' AND y < 'V'; }
 } {IV 1}
+# Tarantool: see comment to minmax3-1.1.2. Change 4 -> 2.
 do_test minmax3-1.1.6 {
   count   { SELECT max(y) FROM t1 WHERE x = '2' AND z != 'five'; }
-} {IV 4}
+} {IV 2}
 
 do_test minmax3-1.2.1 {
   # Linear scan of t1.
   execsql { DROP INDEX i1 ; DROP INDEX i2 }
   count { SELECT min(y) FROM t1 WHERE x = '2'; }
 } {II 5}
+# Tarantool: see comment to minmax3-1.2.2. Change 4 -> 2.
 do_test minmax3-1.2.2 {
   # Index i1 optimizes the WHERE x='2' constraint.
   execsql { CREATE INDEX i1 ON t1(x) }
   count   { SELECT min(y) FROM t1 WHERE x = '2'; }
-} {II 9}
+} {II 5}
 do_test minmax3-1.2.3 {
   # Index i2 optimizes the WHERE x='2' constraint and the min(y).
   execsql { CREATE INDEX i2 ON t1(x,y) }
